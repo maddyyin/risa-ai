@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Sidebar } from "./Sidebar";
@@ -10,16 +10,34 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isAuthPage = pathname === "/signin" || pathname === "/signup";
   const isLandingPage = pathname === "/";
+
+  // Close sidebar on route change
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when drawer is open
+  useEffect(() => {
+    if (sidebarOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [sidebarOpen]);
 
   useEffect(() => {
     if (!loading) {
       if (!user && !isAuthPage && !isLandingPage) {
         router.push("/signin");
       } else if (user && (isAuthPage || isLandingPage)) {
-        // Redirect to dashboard if logged in user lands on signin, signup, or root landing page
         router.push("/dashboard");
       }
     }
@@ -54,8 +72,46 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-[#0a0a0f] text-white">
+      {/* Desktop Sidebar */}
       <Sidebar />
-      <div className="flex-1 flex flex-col min-h-screen">
+
+      {/* Mobile Drawer Overlay */}
+      <div
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          sidebarOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setSidebarOpen(false)}
+      />
+
+      {/* Mobile Drawer */}
+      <aside
+        className={`fixed top-0 left-0 z-50 h-full w-64 bg-[#0a0a0f] border-r border-white/[0.06] transition-transform duration-300 ease-out lg:hidden ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <Sidebar isMobile onClose={() => setSidebarOpen(false)} />
+      </aside>
+
+      <div className="flex-1 flex flex-col min-h-screen min-w-0">
+        {/* Mobile Top Bar */}
+        <div className="lg:hidden shrink-0 sticky top-0 z-30 bg-[#0a0a0f]/95 backdrop-blur-md border-b border-white/[0.06]">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 -ml-2 rounded-lg hover:bg-white/[0.04] transition-colors"
+              aria-label="Open navigation"
+            >
+              <svg className="w-5 h-5 text-white/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <span className="font-display font-bold text-sm tracking-tight text-white">
+              RISA
+            </span>
+            <div className="w-9" />
+          </div>
+        </div>
+
         {children}
         <MobileNav />
       </div>

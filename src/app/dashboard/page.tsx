@@ -7,7 +7,6 @@ import { StatCard } from "@/components/ui/StatCard";
 import { InsightCard } from "@/components/ai/InsightCard";
 import Link from "next/link";
 import { Check, Target, ChevronRight, Zap } from "lucide-react";
-import { Habit } from "@/types";
 import { auth } from "@/lib/firebase";
 
 // Helper to compute time-aware greeting
@@ -72,7 +71,7 @@ function calculateStreak(completions: { date: string }[]) {
 
   let streak = 0;
   if (hasToday || hasYesterday) {
-    let checkDate = hasToday ? today : yesterday;
+    const checkDate = hasToday ? today : yesterday;
     while (true) {
       const checkStr = checkDate.toISOString().split("T")[0];
       if (dates.includes(checkStr)) {

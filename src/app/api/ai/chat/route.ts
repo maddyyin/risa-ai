@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  let user: any = null;
+  let user: { id: string } | null = null;
   try {
     user = await getAuthenticatedUser(request);
     if (!user) {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 1. Save user message to database
-    const userMessage = await prisma.aIConversation.create({
+    await prisma.aIConversation.create({
       data: {
         userId: user.id,
         role: 'user',
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     const motivationTone = userRecord?.motivationTone || 'supportive';
     const aggressiveness = userRecord?.aggressiveness || 'balanced';
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     let aiResponseText = '';
 
     if (!apiKey) {
@@ -118,6 +118,7 @@ Return a JSON object:
       const responseText = await generateAIResponse({
         prompt,
         isJson: true,
+        fallbackType: 'chat',
       });
 
       const parsed = JSON.parse(responseText || '{}');

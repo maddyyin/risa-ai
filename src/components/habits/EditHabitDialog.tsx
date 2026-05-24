@@ -1,19 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useHabitStore } from "@/store/habitStore";
+import { Habit, Priority, HabitFrequency } from "@/types";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus } from "lucide-react";
-import { Priority, HabitFrequency } from "@/types";
 
 const weekDays = [
   { label: "S", value: 0 },
@@ -25,17 +23,35 @@ const weekDays = [
   { label: "S", value: 6 },
 ];
 
-export function CreateHabitDialog() {
-  const createHabit = useHabitStore((s) => s.createHabit);
+interface EditHabitDialogProps {
+  habit: Habit;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function EditHabitDialog({ habit, open, onOpenChange }: EditHabitDialogProps) {
+  const updateHabit = useHabitStore((s) => s.updateHabit);
   const categories = useHabitStore((s) => s.categories);
-  const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [icon, setIcon] = useState("📌");
-  const [category, setCategory] = useState("General");
-  const [priority, setPriority] = useState<Priority>("medium");
-  const [frequency, setFrequency] = useState<HabitFrequency>("daily");
-  const [targetDays, setTargetDays] = useState<number[]>([]);
-  const [reminderTime, setReminderTime] = useState("");
+
+  const [name, setName] = useState(habit.name);
+  const [icon, setIcon] = useState(habit.icon);
+  const [category, setCategory] = useState(habit.category);
+  const [priority, setPriority] = useState<Priority>(habit.priority);
+  const [frequency, setFrequency] = useState<HabitFrequency>(habit.frequency);
+  const [targetDays, setTargetDays] = useState<number[]>(habit.targetDays || []);
+  const [reminderTime, setReminderTime] = useState(habit.reminderTime || "");
+
+  // Re-sync form when habit prop changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    setName(habit.name);
+    setIcon(habit.icon);
+    setCategory(habit.category);
+    setPriority(habit.priority);
+    setFrequency(habit.frequency);
+    setTargetDays(habit.targetDays || []);
+    setReminderTime(habit.reminderTime || "");
+  }, [habit]);
 
   const handleToggleDay = (dayValue: number) => {
     if (targetDays.includes(dayValue)) {
@@ -49,42 +65,25 @@ export function CreateHabitDialog() {
     e.preventDefault();
     if (!name.trim()) return;
 
-    await createHabit({
-      name,
+    await updateHabit(habit.id, {
+      name: name.trim(),
       icon: icon || "📌",
-      color: "#8b5cf6",
-      frequency,
-      targetDays: frequency === "custom" ? targetDays : undefined,
       category: category || "General",
       priority,
+      frequency,
+      targetDays: frequency === "custom" ? targetDays : undefined,
       reminderTime: reminderTime || undefined,
     });
 
-    // Reset Form
-    setName("");
-    setIcon("📌");
-    setCategory("General");
-    setPriority("medium");
-    setFrequency("daily");
-    setTargetDays([]);
-    setReminderTime("");
-    setOpen(false);
+    onOpenChange(false);
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger
-        render={
-          <button className="btn-primary flex items-center gap-1.5 px-4 py-2 text-xs font-semibold select-none cursor-pointer">
-            <Plus className="w-3.5 h-3.5" />
-            Create Habit
-          </button>
-        }
-      />
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[420px] bg-[#111118] border-white/[0.06] text-white">
         <DialogHeader className="pb-3 border-b border-white/[0.06]">
           <DialogTitle className="font-display font-bold text-lg text-white">
-            Create Habit
+            Edit Habit
           </DialogTitle>
         </DialogHeader>
 
@@ -92,11 +91,11 @@ export function CreateHabitDialog() {
           {/* Name & Icon */}
           <div className="grid grid-cols-4 gap-4">
             <div className="col-span-3 space-y-1.5">
-              <Label htmlFor="name" className="text-white/60 text-xs">
+              <Label htmlFor="edit-name" className="text-white/60 text-xs">
                 Habit Name
               </Label>
               <Input
-                id="name"
+                id="edit-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Morning Meditation"
@@ -105,11 +104,11 @@ export function CreateHabitDialog() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="icon" className="text-white/60 text-xs">
+              <Label htmlFor="edit-icon" className="text-white/60 text-xs">
                 Icon
               </Label>
               <Input
-                id="icon"
+                id="edit-icon"
                 value={icon}
                 onChange={(e) => setIcon(e.target.value)}
                 placeholder="📌"
@@ -121,7 +120,7 @@ export function CreateHabitDialog() {
           {/* Category */}
           <div className="space-y-1.5">
             <Label className="text-white/60 text-xs">Category</Label>
-            <div className="flex flex-wrap gap-1.5 max-h-[120px] overflow-y-auto">
+            <div className="flex flex-wrap gap-1.5">
               {categories.map((cat) => (
                 <button
                   key={cat.id}
@@ -148,7 +147,7 @@ export function CreateHabitDialog() {
                   type="button"
                   onClick={() => setPriority(p)}
                   className={`chip capitalize text-center ${
-                    priority === p ? "chip-active" : "chip-inactive"
+                    priority === p ? "chip-active" : ""
                   }`}
                 >
                   {p}
@@ -167,7 +166,7 @@ export function CreateHabitDialog() {
                   type="button"
                   onClick={() => setFrequency(f)}
                   className={`chip capitalize text-center ${
-                    frequency === f ? "chip-active" : "chip-inactive"
+                    frequency === f ? "chip-active" : ""
                   }`}
                 >
                   {f}
@@ -203,11 +202,11 @@ export function CreateHabitDialog() {
 
           {/* Reminder Time */}
           <div className="space-y-1.5">
-            <Label htmlFor="reminder" className="text-white/60 text-xs">
+            <Label htmlFor="edit-reminder" className="text-white/60 text-xs">
               Reminder Time (optional)
             </Label>
             <Input
-              id="reminder"
+              id="edit-reminder"
               type="time"
               value={reminderTime}
               onChange={(e) => setReminderTime(e.target.value)}
@@ -220,13 +219,13 @@ export function CreateHabitDialog() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setOpen(false)}
+              onClick={() => onOpenChange(false)}
               className="border-white/[0.08] text-white/70 hover:bg-white/[0.03]"
             >
               Cancel
             </Button>
             <Button type="submit" disabled={!name.trim()} className="btn-primary">
-              Create Habit
+              Save Changes
             </Button>
           </div>
         </form>

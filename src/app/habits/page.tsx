@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useHabitStore } from "@/store/habitStore";
 import { Header } from "@/components/layout/Header";
 import { InsightCard } from "@/components/ai/InsightCard";
@@ -8,22 +8,33 @@ import { HabitGrid } from "@/components/habits/HabitGrid";
 import { DailyTasks } from "@/components/habits/DailyTasks";
 import { AIChat } from "@/components/ai/AIChat";
 import { CreateHabitDialog } from "@/components/habits/CreateHabitDialog";
-import { BrainCircuit } from "lucide-react";
+import { CategoryManagerDialog } from "@/components/habits/CategoryManagerDialog";
+import { BrainCircuit, FolderOpen } from "lucide-react";
 
 export default function HabitsPage() {
-  const { insights, insightsLoading, fetchInsights } = useHabitStore();
+  const { insights, insightsLoading, fetchInsights, loadCategories } = useHabitStore();
+  const [catManagerOpen, setCatManagerOpen] = useState(false);
 
   useEffect(() => {
     fetchInsights();
-  }, [fetchInsights]);
+    loadCategories();
+  }, [fetchInsights, loadCategories]);
 
   return (
     <div className="flex-1 flex flex-col min-w-0">
       <Header title="Habits" subtitle="Track and refine your daily routines">
+        <button
+          onClick={() => setCatManagerOpen(true)}
+          className="btn-ghost flex items-center gap-1.5 px-3 py-2 text-xs font-semibold select-none cursor-pointer"
+          title="Manage Categories"
+        >
+          <FolderOpen className="w-3.5 h-3.5" />
+          <span className="hidden sm:inline">Categories</span>
+        </button>
         <CreateHabitDialog />
       </Header>
 
-      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-5xl">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 space-y-6 max-w-5xl">
         {/* Section A: AI Guidance Insights */}
         <section className="space-y-2.5">
           <div className="flex items-center gap-2 text-white/40 text-[10px] font-bold uppercase tracking-wider">
@@ -76,6 +87,12 @@ export default function HabitsPage() {
           </section>
         </div>
       </main>
+
+      {/* Category Manager Dialog */}
+      <CategoryManagerDialog
+        open={catManagerOpen}
+        onOpenChange={setCatManagerOpen}
+      />
     </div>
   );
 }

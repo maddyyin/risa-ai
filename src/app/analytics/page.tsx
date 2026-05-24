@@ -5,7 +5,7 @@ import { useHabitStore } from "@/store/habitStore";
 import { Header } from "@/components/layout/Header";
 import { Heatmap } from "@/components/habits/Heatmap";
 import { InsightCard } from "@/components/ai/InsightCard";
-import { BarChart2, Flame, AlertCircle } from "lucide-react";
+import { BarChart2, AlertCircle } from "lucide-react";
 
 export default function AnalyticsPage() {
   const { stats, fetchStats, insights, fetchInsights } = useHabitStore();
@@ -40,7 +40,9 @@ export default function AnalyticsPage() {
 
   // Get weekly reflection text from AI
   const weeklyReflection = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     if (insights && (insights as any).weeklyReflection) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (insights as any).weeklyReflection;
     }
     // Fallback if not directly attached to insights array
@@ -77,7 +79,7 @@ export default function AnalyticsPage() {
                 AI Behavioral Reflection
               </span>
               <p className="text-white/90 text-sm sm:text-base leading-relaxed italic font-medium">
-                "{weeklyReflection}"
+                &quot;{weeklyReflection}&quot;
               </p>
               <p className="text-[10px] text-white/30 font-medium">
                 Generated from your habit logs over the last 30 days.

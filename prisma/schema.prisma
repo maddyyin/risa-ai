@@ -33,8 +33,9 @@ model Habit {
   category    String            @default("General")
   priority    String            @default("medium")
   archived    Boolean           @default(false)
-  sortOrder   Int               @default(0)
-  createdAt   DateTime          @default(now())
+  sortOrder    Int               @default(0)
+  reminderTime String?
+  createdAt    DateTime          @default(now())
   completions HabitCompletion[]
 }
 

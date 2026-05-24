@@ -23,8 +23,9 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { name, icon, color, frequency, targetDays, category, priority, archived, sortOrder } = body;
+    const { name, icon, color, frequency, targetDays, category, priority, archived, sortOrder, reminderTime } = body;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
     if (name !== undefined) data.name = name;
     if (icon !== undefined) data.icon = icon;
@@ -35,6 +36,7 @@ export async function PUT(
     if (priority !== undefined) data.priority = priority;
     if (archived !== undefined) data.archived = archived;
     if (sortOrder !== undefined) data.sortOrder = sortOrder;
+    if (reminderTime !== undefined) data.reminderTime = reminderTime || null;
 
     const habit = await prisma.habit.update({
       where: { id },

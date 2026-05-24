@@ -17,7 +17,7 @@ function getStreakStats(datesStr: string[]) {
 
   let currentStreak = 0;
   if (hasToday || hasYesterday) {
-    let checkDate = hasToday ? today : yesterday;
+    const checkDate = hasToday ? today : yesterday;
     while (true) {
       const checkStr = checkDate.toISOString().split('T')[0];
       if (uniqueDates.includes(checkStr)) {

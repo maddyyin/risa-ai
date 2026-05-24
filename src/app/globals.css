@@ -521,3 +521,34 @@
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.25); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
+
+@layer utilities {
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* ============================================================
+   Mobile & Touch Optimizations
+   ============================================================ */
+@media (max-width: 768px) {
+  .habit-cell {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+  .input-minimal {
+    font-size: 16px; /* Prevent iOS auto-zoom on focus */
+  }
+  .btn-primary, .btn-ghost {
+    min-height: 44px; /* Minimum touch target size */
+  }
+  .chip {
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+}

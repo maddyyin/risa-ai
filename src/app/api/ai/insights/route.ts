@@ -4,7 +4,7 @@ import { generateAIResponse } from '@/lib/ai';
 import { getAuthenticatedUser } from '@/lib/auth-backend';
 
 interface CachedInsightData {
-  data: any;
+  data: unknown;
   timestamp: number;
 }
 
@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
     const motivationTone = userRecord?.motivationTone || 'supportive';
     const aggressiveness = userRecord?.aggressiveness || 'balanced';
 
-    const apiKey = process.env.OPENROUTER_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
       // Local fallback behavior analysis
       const localInsights = generateLocalInsights(habits);
@@ -100,10 +100,11 @@ Insights messages should be quiet, encouraging, emotionally intelligent, support
     const resultText = await generateAIResponse({
       prompt,
       isJson: true,
+      fallbackType: 'insights',
     });
 
     if (!resultText) {
-      throw new Error('OpenRouter returned an empty response');
+      throw new Error('Groq API returned an empty response');
     }
 
     const parsedInsights = JSON.parse(resultText);
@@ -139,14 +140,22 @@ function completionDates(completions: { date: string }[]): string[] {
   return completions.map((c) => c.date).sort();
 }
 
-function generateLocalInsights(habits: any[]) {
-  const insights: any[] = [];
+interface HabitWithCompletions {
+  name: string;
+  priority: string;
+  frequency: string;
+  createdAt: Date | string;
+  completions: { date: string }[];
+}
+
+function generateLocalInsights(habits: HabitWithCompletions[]) {
+  const insights: { type: string; message: string; habitName?: string }[] = [];
   let highPriorityTotal = 0;
   let highPriorityCompleted = 0;
   const todayStr = new Date().toISOString().split('T')[0];
 
   habits.forEach((h) => {
-    const completions = h.completions.map((c: any) => c.date);
+    const completions = h.completions.map((c) => c.date);
     const completedLast30 = completions.filter((d: string) => {
       const diff = new Date().getTime() - new Date(d).getTime();
       return diff <= 1000 * 60 * 60 * 24 * 30;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Target, BarChart3, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, Target, BarChart3, Settings, LogOut, X } from "lucide-react";
 import { useHabitStore } from "@/store/habitStore";
 import { useAuth } from "@/context/AuthContext";
 
@@ -13,7 +13,12 @@ const navLinks = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isMobile?: boolean;
+  onClose?: () => void;
+}
+
+export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const stats = useHabitStore((s) => s.stats);
   const { user, logOut } = useAuth();
@@ -21,17 +26,30 @@ export function Sidebar() {
   const displayName = user?.email?.split("@")[0] || "User";
   const firstLetter = (user?.email?.[0] || "U").toUpperCase();
 
+  const containerClass = isMobile
+    ? "flex flex-col w-full h-full bg-[#0a0a0f] relative z-20"
+    : "hidden lg:flex flex-col w-60 border-r border-white/[0.06] bg-[#0a0a0f] relative z-20 shrink-0";
+
   return (
-    <aside className="hidden lg:flex flex-col w-60 border-r border-white/[0.06] bg-[#0a0a0f] relative z-20">
+    <aside className={containerClass}>
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/[0.06]">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="px-6 py-6 border-b border-white/[0.06] flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2" onClick={onClose}>
           <span className="font-display font-bold text-xl tracking-tight text-white">
             RISA
           </span>
         </Link>
-        <p className="text-white/30 text-xs mt-0.5">habit intelligence</p>
+        {isMobile && onClose && (
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/50 hover:text-white/80 transition-colors"
+            aria-label="Close navigation"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
+      <p className="text-white/30 text-xs px-6 pt-1 pb-2">habit intelligence</p>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-1">
@@ -43,6 +61,7 @@ export function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={onClose}
               className={`sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
                 isActive
                   ? "active text-white font-medium"

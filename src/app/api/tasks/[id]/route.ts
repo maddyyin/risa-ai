@@ -25,6 +25,7 @@ export async function PUT(
     const body = await request.json();
     const { completed, title, sortOrder } = body;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data: any = {};
     if (completed !== undefined) data.completed = completed;
     if (title !== undefined) data.title = title;

@@ -1,10 +1,6 @@
 import { create } from 'zustand';
-import { Habit, DailyTask, AIMessage, OverallStats, InsightCard } from '../types';
+import { Habit, DailyTask, AIMessage, OverallStats, InsightCard, Category, PRESET_CATEGORIES } from '../types';
 import { auth } from '@/lib/firebase';
-
-function today(): string {
-  return new Date().toISOString().split('T')[0];
-}
 
 // Helper to retrieve Authorization headers containing current Firebase ID Token
 async function getAuthHeaders(): Promise<HeadersInit> {
@@ -16,6 +12,24 @@ async function getAuthHeaders(): Promise<HeadersInit> {
   };
 }
 
+// ─── Category Persistence (localStorage) ──────────────────
+const CUSTOM_CATEGORIES_KEY = 'risa_custom_categories';
+
+function loadCustomCategories(): Category[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(CUSTOM_CATEGORIES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomCategories(cats: Category[]) {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem(CUSTOM_CATEGORIES_KEY, JSON.stringify(cats));
+}
+
 interface HabitState {
   habits: Habit[];
   dailyTasks: DailyTask[];
@@ -25,6 +39,13 @@ interface HabitState {
   loading: boolean;
   insightsLoading: boolean;
   chatLoading: boolean;
+
+  // Categories
+  categories: Category[];
+  loadCategories: () => void;
+  addCategory: (cat: Omit<Category, 'id' | 'isCustom'>) => void;
+  updateCategory: (id: string, updates: Partial<Category>) => void;
+  deleteCategory: (id: string) => void;
 
   // Habits
   fetchHabits: () => Promise<void>;
@@ -40,6 +61,7 @@ interface HabitState {
   fetchDailyTasks: (date: string) => Promise<void>;
   addDailyTask: (title: string, date: string) => Promise<void>;
   toggleDailyTask: (id: string) => Promise<void>;
+  updateDailyTask: (id: string, updates: { title?: string; sortOrder?: number }) => Promise<void>;
   deleteDailyTask: (id: string) => Promise<void>;
 
   // AI
@@ -57,6 +79,40 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   loading: true,
   insightsLoading: false,
   chatLoading: false,
+  categories: [...PRESET_CATEGORIES],
+
+  // ─── Categories ─────────────────────────────────────────────
+
+  loadCategories: () => {
+    const custom = loadCustomCategories();
+    set({ categories: [...PRESET_CATEGORIES, ...custom] });
+  },
+
+  addCategory: (cat) => {
+    const newCat: Category = {
+      ...cat,
+      id: 'custom_' + Math.random().toString(36).substring(2, 9),
+      isCustom: true,
+    };
+    const custom = loadCustomCategories();
+    const updated = [...custom, newCat];
+    saveCustomCategories(updated);
+    set({ categories: [...PRESET_CATEGORIES, ...updated] });
+  },
+
+  updateCategory: (id, updates) => {
+    const custom = loadCustomCategories().map((c) =>
+      c.id === id ? { ...c, ...updates } : c
+    );
+    saveCustomCategories(custom);
+    set({ categories: [...PRESET_CATEGORIES, ...custom] });
+  },
+
+  deleteCategory: (id) => {
+    const custom = loadCustomCategories().filter((c) => c.id !== id);
+    saveCustomCategories(custom);
+    set({ categories: [...PRESET_CATEGORIES, ...custom] });
+  },
 
   // ─── Habits ──────────────────────────────────────────────
 
@@ -68,10 +124,10 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       });
       if (!res.ok) throw new Error('Failed to fetch habits');
       const data = await res.json();
-      const parsed = data.map((h: any) => ({
+      const parsed = data.map((h: Record<string, unknown>) => ({
         ...h,
-        createdAt: new Date(h.createdAt),
-        targetDays: h.targetDays ? JSON.parse(h.targetDays) : undefined,
+        createdAt: new Date(h.createdAt as string),
+        targetDays: h.targetDays ? JSON.parse(h.targetDays as string) : undefined,
       }));
       set({ habits: parsed, loading: false });
     } catch (e) {
@@ -257,6 +313,25 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     }
   },
 
+  updateDailyTask: async (id, updates) => {
+    set({
+      dailyTasks: get().dailyTasks.map((t) => (t.id === id ? { ...t, ...updates } : t)),
+    });
+    try {
+      const authHeaders = await getAuthHeaders();
+      await fetch(`/api/tasks/${id}`, {
+        method: 'PUT',
+        headers: {
+          ...authHeaders,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates),
+      });
+    } catch (e) {
+      console.error('Update daily task error:', e);
+    }
+  },
+
   deleteDailyTask: async (id) => {
     set({ dailyTasks: get().dailyTasks.filter((t) => t.id !== id) });
     try {
@@ -341,7 +416,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       });
       if (!res.ok) throw new Error('Failed to fetch chat');
       const data = await res.json();
-      const messages = data.map((m: any) => ({ ...m, createdAt: new Date(m.createdAt) }));
+      const messages = data.map((m: Record<string, unknown>) => ({ ...m, createdAt: new Date(m.createdAt as string) }));
       set({ chatMessages: messages });
     } catch (e) {
       console.warn('Chat history fetch failed:', e);

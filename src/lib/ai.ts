@@ -1,24 +1,18 @@
 import OpenAI from 'openai';
 
-// Centralized list of OpenRouter models in order of priority (Primary -> Fallbacks)
-const MODELS = [
-  'openrouter/free',
-  'meta-llama/llama-3.2-3b-instruct:free',
-  'meta-llama/llama-3.3-70b-instruct:free',
-];
+// Centralized configuration for Groq API
+const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
+const MAIN_MODEL = 'llama-3.3-70b-versatile';
+const DEFAULT_TIMEOUT_MS = 8000; // 8 seconds timeout to prevent application hanging
 
-const openRouterKey = process.env.OPENROUTER_API_KEY;
+const groqApiKey = process.env.GROQ_API_KEY;
 
-// Create a single instance of the OpenAI client pointing to OpenRouter
-const openai = openRouterKey
+// Create a single instance of the OpenAI client pointing to Groq
+const openai = groqApiKey
   ? new OpenAI({
-      baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: openRouterKey,
-      defaultHeaders: {
-        'HTTP-Referer': 'https://risa-habits.app', // Required by OpenRouter
-        'X-Title': 'RISA Habit Coach', // Required by OpenRouter
-      },
-      timeout: 6000, // 6 seconds default timeout for the client
+      baseURL: GROQ_BASE_URL,
+      apiKey: groqApiKey,
+      timeout: DEFAULT_TIMEOUT_MS,
     })
   : null;
 
@@ -26,60 +20,83 @@ interface GenerateParams {
   prompt: string;
   systemPrompt?: string;
   isJson?: boolean;
+  fallbackType?: 'chat' | 'insights';
 }
 
 /**
- * Centrally manages generating completions with cascading model fallbacks
+ * Centrally manages generating completions using Groq API.
+ * Recovers gracefully from timeouts or API errors by returning supportive fallback responses.
  */
 export async function generateAIResponse({
   prompt,
   systemPrompt = 'You are RISA, a calm, supportive, and emotionally intelligent behavioral consistency coach.',
   isJson = false,
+  fallbackType = 'chat',
 }: GenerateParams): Promise<string> {
   if (!openai) {
-    throw new Error('OPENROUTER_API_KEY is not set');
+    console.warn('[AI Layer] GROQ_API_KEY is not configured. Utilizing local fallback.');
+    return getFallbackResponse(fallbackType, isJson);
   }
 
-  let lastError: any = null;
+  try {
+    console.log(`[AI Layer] Attempting completion using Groq model: ${MAIN_MODEL}`);
 
-  // Try each model in priority order
-  for (const model of MODELS) {
-    try {
-      console.log(`[AI Layer] Attempting completion using model: ${model}`);
-
-      // We set a 6-second timeout per model attempt to avoid blocking
-      const response = await openai.chat.completions.create(
-        {
-          model: model,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: prompt },
-          ],
-          response_format: isJson ? { type: 'json_object' } : undefined,
-          temperature: 0.7,
-        },
-        { timeout: 6000 }
-      );
-
-      const text = response.choices[0]?.message?.content;
-      if (text) {
-        console.log(`[AI Layer] Success with model: ${model}`);
-        return text;
+    const response = await openai.chat.completions.create(
+      {
+        model: MAIN_MODEL,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt },
+        ],
+        response_format: isJson ? { type: 'json_object' } : undefined,
+        temperature: 0.7,
+      },
+      {
+        // Enforce request-level timeout
+        timeout: DEFAULT_TIMEOUT_MS,
       }
-      throw new Error(`Model ${model} returned empty content`);
-    } catch (error: any) {
-      console.warn(`[AI Layer] Error with model ${model}:`, error.message || error);
-      lastError = error;
+    );
 
-      // If the error is 401 (Unauthorized), 402 (Payment Required/Insufficient Balance), or 429 (Rate Limit),
-      // we abort the cascade immediately to fail-fast and allow the application to use local fallbacks.
-      if (error.status === 401 || error.status === 402 || error.status === 429) {
-        console.error(`[AI Layer] Critical error status ${error.status} received. Aborting model cascade.`);
-        throw error;
-      }
+    const text = response.choices[0]?.message?.content;
+    if (text) {
+      console.log(`[AI Layer] Success with Groq model: ${MAIN_MODEL}`);
+      return text;
     }
+    throw new Error(`Groq model ${MAIN_MODEL} returned empty content`);
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error(`[AI Layer] Error with Groq model ${MAIN_MODEL}:`, errorMsg);
+    
+    // Return friendly, supportive fallbacks instead of crashing
+    return getFallbackResponse(fallbackType, isJson);
+  }
+}
+
+/**
+ * Generates highly structured, supportive, and emotionally intelligent fallback responses.
+ */
+function getFallbackResponse(type: 'chat' | 'insights', isJson: boolean): string {
+  if (type === 'insights') {
+    const insightsFallback = {
+      insights: [
+        {
+          type: 'tip',
+          message: 'Establish a fixed, quiet time block for your most challenging habits to reduce friction.',
+        },
+        {
+          type: 'encouragement',
+          message: 'Every small effort is a building block for long-term consistency. Keep moving forward.',
+        }
+      ],
+      weeklyReflection: 'Your journey is unique. When routines feel heavy, gently reduce the resistance by taking the smallest action possible.',
+      focusScore: 70,
+    };
+    return isJson ? JSON.stringify(insightsFallback) : 'Focus on your key routines today.';
   }
 
-  // If all models fail, throw the last error
-  throw lastError || new Error('All model attempts failed');
+  // Default Chat Fallback (Calm, emotionally intelligent, mentor-like, supportive)
+  const chatFallback = {
+    content: "Let's take a deep breath and look at your habits. What is presenting the greatest challenge to your flow today?",
+  };
+  return isJson ? JSON.stringify(chatFallback) : chatFallback.content;
 }
