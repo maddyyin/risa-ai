@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RISA - AI Productivity Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&f[]=cabinet-grotesk@700,800&display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'General Sans', sans-serif; }
+    .font-display { font-family: 'Cabinet Grotesk', sans-serif; }
+    
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.04);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --glow-purple: rgba(139, 92, 246, 0.3);
+      --glow-pink: rgba(236, 72, 153, 0.3);
+    }
+    
+    .glass-card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      transition: all 0.3s ease;
+    }
+    
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 8px 32px rgba(139, 92, 246, 0.12);
+      transform: translateY(-2px);
+    }
+    
+    .gradient-text {
+      background: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #f472b6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .glow-button {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+      box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+      transition: all 0.3s ease;
+    }
+    
+    .glow-button:hover {
+      box-shadow: 0 8px 40px rgba(139, 92, 246, 0.6);
+      transform: translateY(-2px);
+    }
+    
+    .sidebar-link {
+      transition: all 0.2s ease;
+    }
+    
+    .sidebar-link:hover {
+      background: rgba(139, 92, 246, 0.1);
+    }
+    
+    .sidebar-link.active {
+      background: rgba(139, 92, 246, 0.2);
+      border-right: 3px solid #8b5cf6;
+    }
+    
+    .progress-ring { transform: rotate(-90deg); }
+    
+    .progress-ring-circle {
+      stroke-dasharray: 283;
+      stroke-dashoffset: 283;
+      animation: progress-fill 2s ease-out forwards 0.5s;
+    }
+    
+    @keyframes progress-fill { to { stroke-dashoffset: 62; } }
+    
+    @keyframes fade-in-up {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slide-in-left {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+    
+    @keyframes counter-up {
+      from { opacity: 0; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    @keyframes bar-grow {
+      from { transform: scaleY(0); }
+      to { transform: scaleY(1); }
+    }
+    
+    .animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; opacity: 0; }
+    .animate-fade-in { animation: fade-in 0.8s ease-out forwards; opacity: 0; }
+    .animate-slide-left { animation: slide-in-left 0.5s ease-out forwards; opacity: 0; }
+    .animate-counter { animation: counter-up 0.8s ease-out forwards; opacity: 0; }
+    .animate-bar { animation: bar-grow 0.8s ease-out forwards; transform-origin: bottom; }
+    .ai-pulse { animation: pulse-glow 2s ease-in-out infinite; }
+    
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .delay-600 { animation-delay: 0.6s; }
+    .delay-700 { animation-delay: 0.7s; }
+    .delay-800 { animation-delay: 0.8s; }
+    
+    .time-block-morning { border-left: 3px solid #fbbf24; }
+    .time-block-afternoon { border-left: 3px solid #f97316; }
+    .time-block-evening { border-left: 3px solid #8b5cf6; }
+    
+    .bar-tooltip {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+    
+    .bar-container:hover .bar-tooltip { opacity: 1; }
+    .bar-container:hover .bar-fill { filter: brightness(1.2); }
+    
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); }
+    ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.4); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.6); }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex bg-[#0a0a14] text-white">
+    
+    <!-- Ambient Background Effects -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden">
+      <div class="absolute top-[-200px] right-[-200px] w-[600px] h-[600px] rounded-full bg-purple-600/8 blur-[150px]"></div>
+      <div class="absolute bottom-[-150px] left-[-150px] w-[500px] h-[500px] rounded-full bg-indigo-600/8 blur-[120px]"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-pink-600/5 blur-[100px]"></div>
+    </div>
+    
+    <!-- Sidebar - Desktop -->
+    <aside class="hidden lg:flex flex-col w-72 border-r border-white/5 bg-[#0a0a14]/80 backdrop-blur-xl relative z-20">
+      <!-- Logo -->
+      <div class="p-6 border-b border-white/5 animate-slide-left">
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+            <iconify-icon icon="lucide:sparkles" class="text-white text-xl"></iconify-icon>
+          </div>
+          <div>
+            <span class="font-display font-bold text-xl tracking-tight">RISA</span>
+            <p class="text-white/40 text-xs -mt-0.5">Intelligent Assistant</p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Navigation -->
+      <nav class="flex-1 p-4 space-y-1">
+        <a href="#" id="sidebar-dashboard-link" class="sidebar-link active flex items-center gap-3 px-4 py-3 rounded-xl text-white">
+          <iconify-icon icon="lucide:layout-dashboard" class="text-xl text-purple-400"></iconify-icon>
+          <span class="font-medium">Dashboard</span>
+        </a>
+        <a href="#" id="sidebar-tasks-link" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white">
+          <iconify-icon icon="lucide:check-square" class="text-xl"></iconify-icon>
+          <span class="font-medium">Tasks</span>
+          <span class="ml-auto px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-400 text-xs font-medium">18</span>
+        </a>
+        <a href="#" id="sidebar-planner-link" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white">
+          <iconify-icon icon="lucide:calendar" class="text-xl"></iconify-icon>
+          <span class="font-medium">Planner</span>
+        </a>
+        <a href="#" id="sidebar-analytics-link" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white">
+          <iconify-icon icon="lucide:bar-chart-3" class="text-xl"></iconify-icon>
+          <span class="font-medium">Analytics</span>
+        </a>
+        <a href="#" id="sidebar-settings-link" class="sidebar-link flex items-center gap-3 px-4 py-3 rounded-xl text-white/60 hover:text-white">
+          <iconify-icon icon="lucide:settings" class="text-xl"></iconify-icon>
+          <span class="font-medium">Settings</span>
+        </a>
+      </nav>
+      
+      <!-- AI Assistant Card -->
+      <div class="p-4">
+        <div class="glass-card rounded-2xl p-4 border-purple-500/20">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+              <iconify-icon icon="lucide:brain" class="text-white text-lg ai-pulse"></iconify-icon>
+            </div>
+            <div>
+              <h4 class="font-semibold text-sm text-white">AI Ready</h4>
+              <p class="text-white/40 text-xs">Auto-scheduling on</p>
+            </div>
+          </div>
+          <button id="ai-schedule-btn" class="w-full glow-button rounded-xl py-2.5 text-sm font-semibold text-white">
+            AI Auto-Schedule
+          </button>
+        </div>
+      </div>
+      
+      <!-- User Profile -->
+      <div class="p-4 border-t border-white/5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-semibold text-sm">
+            JD
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-sm text-white truncate">John Doe</p>
+            <p class="text-white/40 text-xs truncate">john@example.com</p>
+          </div>
+          <button id="user-menu-btn" class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors">
+            <iconify-icon icon="lucide:more-vertical" class="text-white/40"></iconify-icon>
+          </button>
+        </div>
+      </div>
+    </aside>
+    
+    <!-- Main Content -->
+    <div class="flex-1 flex flex-col min-h-screen relative z-10">
+      
+      <!-- Top Header -->
+      <header class="shrink-0 px-6 lg:px-8 py-4 lg:py-5 border-b border-white/5 bg-[#0a0a14]/60 backdrop-blur-xl">
+        <div class="flex items-center justify-between animate-fade-in">
+          <!-- Mobile Logo -->
+          <div class="flex lg:hidden items-center gap-2">
+            <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center">
+              <iconify-icon icon="lucide:sparkles" class="text-white text-lg"></iconify-icon>
+            </div>
+            <span class="font-display font-bold text-xl tracking-tight">RISA</span>
+          </div>
+          
+          <!-- Greeting & Date - Desktop -->
+          <div class="hidden lg:block">
+            <h1 class="font-display font-bold text-2xl tracking-tight">Good Morning, John</h1>
+            <p class="text-white/40 text-sm">Tuesday, 17 June 2025</p>
+          </div>
+          
+          <!-- Actions -->
+          <div class="flex items-center gap-3">
+            <!-- Search - Desktop -->
+            <div class="hidden lg:flex items-center gap-2 px-4 py-2.5 rounded-xl glass-card w-64">
+              <iconify-icon icon="lucide:search" class="text-white/40"></iconify-icon>
+              <input type="text" placeholder="Search tasks..." class="bg-transparent border-none outline-none text-sm text-white placeholder-white/40 w-full">
+              <span class="text-white/20 text-xs border border-white/10 rounded px-1.5 py-0.5">ΓîÿK</span>
+            </div>
+            
+            <button id="nav-notifications-btn" class="relative w-10 h-10 glass-card rounded-xl flex items-center justify-center">
+              <iconify-icon icon="lucide:bell" class="text-lg text-white/70"></iconify-icon>
+              <span class="absolute top-1 right-1 w-2 h-2 bg-pink-500 rounded-full"></span>
+            </button>
+            
+            <!-- Mobile Menu -->
+            <button id="mobile-menu-btn" class="lg:hidden w-10 h-10 glass-card rounded-xl flex items-center justify-center">
+              <iconify-icon icon="lucide:menu" class="text-lg text-white/70"></iconify-icon>
+            </button>
+            
+            <!-- Profile - Desktop -->
+            <div class="hidden lg:flex items-center gap-3 pl-3 border-l border-white/10">
+              <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center font-semibold text-sm">
+                JD
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Mobile Greeting -->
+        <div class="lg:hidden mt-4 animate-fade-in-up delay-100">
+          <p class="text-white/40 text-sm">Tuesday, 17 June 2025</p>
+          <h1 class="font-display font-bold text-xl tracking-tight">Good Morning, John</h1>
+        </div>
+      </header>
+      
+      <!-- Scrollable Content -->
+      <main class="flex-1 overflow-y-auto p-6 lg:p-8">
+        <div class="max-w-7xl mx-auto">
+          
+          <!-- Stats Grid - Top Row -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
+            
+            <!-- Productivity Score Card -->
+            <div class="lg:col-span-2 glass-card rounded-3xl p-6 animate-fade-in-up delay-200">
+              <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-3">
+                    <iconify-icon icon="lucide:zap" class="text-amber-400 text-xl"></iconify-icon>
+                    <span class="text-white/60 text-sm font-medium">Productivity Score</span>
+                  </div>
+                  <div class="flex items-baseline gap-2 mb-4">
+                    <span class="font-display font-bold text-6xl lg:text-7xl gradient-text animate-counter delay-500">78</span>
+                    <span class="text-white/40 text-2xl">%</span>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <span class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 text-sm font-medium">
+                      <iconify-icon icon="lucide:trending-up" class="text-base"></iconify-icon>
+                      +12%
+                    </span>
+                    <span class="text-white/40 text-sm">vs last week</span>
+                  </div>
+                </div>
+                
+                <!-- Circular Progress -->
+                <div class="relative w-32 h-32 lg:w-36 lg:h-36 mx-auto lg:mx-0">
+                  <svg class="progress-ring w-full h-full" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.08)" stroke-width="8" fill="none"/>
+                    <circle class="progress-ring-circle" cx="50" cy="50" r="45" stroke="url(#gradient)" stroke-width="8" fill="none" stroke-linecap="round"/>
+                    <defs>
+                      <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#6366f1"/>
+                        <stop offset="50%" stop-color="#8b5cf6"/>
+                        <stop offset="100%" stop-color="#ec4899"/>
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500/20 to-purple-500/20 flex items-center justify-center">
+                      <iconify-icon icon="lucide:brain" class="text-3xl text-purple-400 ai-pulse"></iconify-icon>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="space-y-4 lg:space-y-6">
+              <!-- Tasks Completed -->
+              <div class="glass-card rounded-2xl p-5 animate-fade-in-up delay-300">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-500/20 flex items-center justify-center">
+                    <iconify-icon icon="lucide:check-circle-2" class="text-emerald-400 text-lg"></iconify-icon>
+                  </div>
+                  <span class="text-white/50 text-sm">Tasks Done</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="font-display font-bold text-3xl text-white">12</span>
+                  <span class="text-white/40 text-lg">/18</span>
+                </div>
+                <div class="mt-3 h-2 rounded-full bg-white/10 overflow-hidden">
+                  <div class="h-full w-[67%] rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400"></div>
+                </div>
+              </div>
+              
+              <!-- Focus Time -->
+              <div class="glass-card rounded-2xl p-5 animate-fade-in-up delay-400">
+                <div class="flex items-center gap-3 mb-3">
+                  <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                    <iconify-icon icon="lucide:timer" class="text-amber-400 text-lg"></iconify-icon>
+                  </div>
+                  <span class="text-white/50 text-sm">Focus Time</span>
+                </div>
+                <div class="flex items-baseline gap-2">
+                  <span class="font-display font-bold text-3xl text-white">4.5</span>
+                  <span class="text-white/40 text-lg">hrs</span>
+                </div>
+                <p class="text-white/30 text-xs mt-2">Goal: 6 hrs daily</p>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Main Content Grid -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Left Column - Schedule & Tasks -->
+            <div class="lg:col-span-2 space-y-6">
+              
+              <!-- Today's Schedule -->
+              <div class="animate-fade-in-up delay-500">
+                <div class="flex items-center justify-between mb-4">
+                  <h2 class="font-semibold text-lg text-white">Today's Schedule</h2>
+                  <a href="#" id="view-planner-link" class="text-purple-400 text-sm font-medium flex items-center gap-1 hover:text-purple-300 transition-colors">
+                    View Planner
+                    <iconify-icon icon="lucide:chevron-right" class="text-sm"></iconify-icon>
+                  </a>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <!-- Morning -->
+                  <div class="glass-card rounded-2xl p-4 time-block-morning">
+                    <div class="flex items-center gap-3 mb-4">
+                      <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center">
+                        <iconify-icon icon="lucide:sunrise" class="text-amber-400 text-lg"></iconify-icon>
+                      </div>
+                      <div>
+                        <h3 class="font-semibold text-white text-sm">Morning</h3>
+                        <p class="text-white/40 text-xs">6 AM - 12 PM</p>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                        <span class="text-white/70 text-xs truncate">Review PRs</span>
+                        <span class="ml-auto text-white/30 text-xs">30m</span>
+                      </div>
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                        <span class="text-white/70 text-xs truncate">Standup</span>
+                        <span class="ml-auto text-white/30 text-xs">15m</span>
+                      </div>
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                        <span class="text-white/70 text-xs truncate">Feature dev</span>
+                        <span class="ml-auto text-white/30 text-xs">2h</span>
+                      </div>
+                    </div>
+                    <p class="text-center text-white/30 text-xs mt-3">+1 more task</p>
+                  </div>
+                  
+                  <!-- Afternoon -->
+                  <div class="glass-card rounded-2xl p-4 time-block-afternoon">
+                    <div class="flex items-center gap-3 mb-4">
+                      <div class="w-10 h-10 rounded-xl bg-orange-500/20 flex items-center justify-center">
+                        <iconify-icon icon="lucide:sun" class="text-orange-400 text-lg"></iconify-icon>
+                      </div>
+                      <div>
+                        <h3 class="font-semibold text-white text-sm">Afternoon</h3>
+                        <p class="text-white/40 text-xs">12 PM - 6 PM</p>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                        <span class="text-white/70 text-xs truncate">Design Review</span>
+                        <span class="ml-auto text-white/30 text-xs">1h</span>
+                      </div>
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                        <span class="text-white/70 text-xs truncate">API Integration</span>
+                        <span class="ml-auto text-white/30 text-xs">2h</span>
+                      </div>
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                        <span class="text-white/70 text-xs truncate">Client Call</span>
+                        <span class="ml-auto text-white/30 text-xs">30m</span>
+                      </div>
+                    </div>
+                    <p class="text-center text-white/30 text-xs mt-3">+3 more tasks</p>
+                  </div>
+                  
+                  <!-- Evening -->
+                  <div class="glass-card rounded-2xl p-4 time-block-evening">
+                    <div class="flex items-center gap-3 mb-4">
+                      <div class="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center">
+                        <iconify-icon icon="lucide:moon" class="text-purple-400 text-lg"></iconify-icon>
+                      </div>
+                      <div>
+                        <h3 class="font-semibold text-white text-sm">Evening</h3>
+                        <p class="text-white/40 text-xs">6 PM - 10 PM</p>
+                      </div>
+                    </div>
+                    <div class="space-y-2">
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                        <span class="text-white/70 text-xs truncate">Documentation</span>
+                        <span class="ml-auto text-white/30 text-xs">1h</span>
+                      </div>
+                      <div class="flex items-center gap-2 p-2 rounded-lg bg-white/5">
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/30"></div>
+                        <span class="text-white/70 text-xs truncate">Planning</span>
+                        <span class="ml-auto text-white/30 text-xs">45m</span>
+                      </div>
+                    </div>
+                    <p class="text-center text-white/40 text-xs mt-3">Light schedule</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Weekly Productivity Chart -->
+              <div class="glass-card rounded-3xl p-6 animate-fade-in-up delay-600">
+                <div class="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 class="font-semibold text-lg text-white">Weekly Productivity</h3>
+                    <p class="text-white/40 text-sm">Tasks completed per day</p>
+                  </div>
+                  <span class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-400 text-sm font-medium">
+                    <iconify-icon icon="lucide:trending-up" class="text-sm"></iconify-icon>
+                    +23%
+                  </span>
+                </div>
+                
+                <!-- Bar Chart -->
+                <div class="relative h-48">
+                  <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                    <div class="border-b border-white/5 flex items-center"><span class="text-xs text-white/25 w-8">20</span></div>
+                    <div class="border-b border-white/5 flex items-center"><span class="text-xs text-white/25 w-8">15</span></div>
+                    <div class="border-b border-white/5 flex items-center"><span class="text-xs text-white/25 w-8">10</span></div>
+                    <div class="border-b border-white/5 flex items-center"><span class="text-xs text-white/25 w-8">5</span></div>
+                    <div class="flex items-center"><span class="text-xs text-white/25 w-8">0</span></div>
+                  </div>
+                  
+                  <div class="absolute left-10 right-0 bottom-0 top-2 flex items-end justify-around gap-3 lg:gap-6">
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">12 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[60%] rounded-t-lg bg-gradient-to-t from-indigo-600 to-indigo-400 animate-bar delay-100"></div>
+                      <span class="text-xs text-white/40 mt-2">Mon</span>
+                    </div>
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">18 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[90%] rounded-t-lg bg-gradient-to-t from-purple-600 to-purple-400 animate-bar delay-200"></div>
+                      <span class="text-xs text-white/40 mt-2">Tue</span>
+                    </div>
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">15 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[75%] rounded-t-lg bg-gradient-to-t from-indigo-600 to-indigo-400 animate-bar delay-300"></div>
+                      <span class="text-xs text-white/40 mt-2">Wed</span>
+                    </div>
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">14 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[70%] rounded-t-lg bg-gradient-to-t from-indigo-600 to-indigo-400 animate-bar delay-400"></div>
+                      <span class="text-xs text-white/40 mt-2">Thu</span>
+                    </div>
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">19 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[95%] rounded-t-lg bg-gradient-to-t from-pink-600 to-pink-400 animate-bar delay-500"></div>
+                      <span class="text-xs text-pink-400 font-medium mt-2">Fri</span>
+                    </div>
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">8 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[40%] rounded-t-lg bg-gradient-to-t from-indigo-600/60 to-indigo-400/60 animate-bar delay-600"></div>
+                      <span class="text-xs text-white/40 mt-2">Sat</span>
+                    </div>
+                    <div class="bar-container relative flex flex-col items-center flex-1 h-full justify-end cursor-pointer group">
+                      <div class="bar-tooltip absolute -top-8 px-2 py-1 rounded-lg bg-white/10 backdrop-blur-md text-xs text-white font-medium z-10">5 tasks</div>
+                      <div class="bar-fill w-full max-w-10 h-[25%] rounded-t-lg bg-gradient-to-t from-indigo-600/60 to-indigo-400/60 animate-bar delay-700"></div>
+                      <span class="text-xs text-white/40 mt-2">Sun</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Column - AI Insights -->
+            <div class="space-y-6">
+              
+              <!-- AI Insights Panel -->
+              <div class="glass-card rounded-3xl p-5 animate-fade-in-up delay-600 border-purple-500/20">
+                <div class="flex items-center gap-3 mb-5">
+                  <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                    <iconify-icon icon="lucide:sparkles" class="text-white text-lg"></iconify-icon>
+                  </div>
+                  <div>
+                    <h3 class="font-semibold text-white">AI Insights</h3>
+                    <p class="text-white/40 text-xs">Based on your patterns</p>
+                  </div>
+                </div>
+                
+                <div class="space-y-3">
+                  <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+                    <iconify-icon icon="lucide:clock" class="text-amber-400 text-lg mt-0.5"></iconify-icon>
+                    <div>
+                      <p class="text-white text-sm font-medium">Peak Focus Hours</p>
+                      <p class="text-white/50 text-xs">9:00 AM - 11:30 AM</p>
+                    </div>
+                  </div>
+                  
+                  <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+                    <iconify-icon icon="lucide:alert-circle" class="text-orange-400 text-lg mt-0.5"></iconify-icon>
+                    <p class="text-white/70 text-sm">Evening blocks often <span class="text-orange-400 font-medium">overbooked</span>. Consider redistribution.</p>
+                  </div>
+                  
+                  <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+                    <iconify-icon icon="lucide:lightbulb" class="text-purple-400 text-lg mt-0.5"></iconify-icon>
+                    <p class="text-white/70 text-sm">Move deep work to morning for <span class="text-purple-400 font-medium">+23%</span> efficiency</p>
+                  </div>
+                  
+                  <div class="flex items-start gap-3 p-3 rounded-xl bg-white/5">
+                    <iconify-icon icon="lucide:trophy" class="text-emerald-400 text-lg mt-0.5"></iconify-icon>
+                    <p class="text-white/70 text-sm">Friday is your most productive day. <span class="text-emerald-400 font-medium">58% higher</span> completion.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Weekly Focus Trend -->
+              <div class="glass-card rounded-3xl p-5 animate-fade-in-up delay-700">
+                <div class="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 class="font-semibold text-white text-sm">Focus Trend</h3>
+                    <p class="text-white/40 text-xs">Hours of focused work</p>
+                  </div>
+                  <span class="text-emerald-400 text-xs font-medium flex items-center gap-1">
+                    <iconify-icon icon="lucide:trending-up" class="text-xs"></iconify-icon>
+                    +18%
+                  </span>
+                </div>
+                
+                <!-- Line Chart -->
+                <div class="relative h-28">
+                  <svg class="w-full h-full" viewBox="0 0 280 100" preserveAspectRatio="none">
+                    <line x1="0" y1="25" x2="280" y2="25" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                    <line x1="0" y1="50" x2="280" y2="50" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                    <line x1="0" y1="75" x2="280" y2="75" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                    
+                    <defs>
+                      <linearGradient id="areaGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="rgba(139, 92, 246, 0.3)"/>
+                        <stop offset="100%" stop-color="rgba(139, 92, 246, 0)"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M0,70 L47,50 L94,60 L140,30 L187,40 L234,20 L280,35 L280,100 L0,100 Z" fill="url(#areaGrad)"/>
+                    <path d="M0,70 L47,50 L94,60 L140,30 L187,40 L234,20 L280,35" fill="none" stroke="url(#gradient)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    
+                    <circle cx="234" cy="20" r="5" fill="#ec4899"/>
+                    <circle cx="234" cy="20" r="10" fill="none" stroke="rgba(236,72,153,0.3)" stroke-width="2"/>
+                  </svg>
+                  
+                  <div class="flex justify-between mt-2 px-1">
+                    <span class="text-white/25 text-[10px]">Mon</span>
+                    <span class="text-white/25 text-[10px]">Tue</span>
+                    <span class="text-white/25 text-[10px]">Wed</span>
+                    <span class="text-white/25 text-[10px]">Thu</span>
+                    <span class="text-white/25 text-[10px]">Fri</span>
+                    <span class="text-pink-400 text-[10px] font-medium">Sat</span>
+                    <span class="text-white/25 text-[10px]">Sun</span>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Quick Add Task -->
+              <div class="glass-card rounded-2xl p-4 animate-fade-in-up delay-800">
+                <div class="flex items-center gap-3">
+                  <input type="text" placeholder="Add a quick task..." class="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-purple-500/50 transition-colors">
+                  <button id="quick-add-btn" class="w-12 h-12 glow-button rounded-xl flex items-center justify-center">
+                    <iconify-icon icon="lucide:plus" class="text-xl text-white"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+      
+      <!-- Mobile Bottom Navigation -->
+      <nav class="lg:hidden shrink-0 pb-8 px-5 bg-[#0a0a14] relative z-40">
+        <div class="glass-card rounded-2xl p-2 flex items-center justify-around">
+          <a href="#" id="nav-dashboard-link" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-purple-500/20">
+            <iconify-icon icon="lucide:layout-dashboard" class="text-xl text-purple-400"></iconify-icon>
+            <span class="text-purple-400 text-[10px] font-medium">Home</span>
+          </a>
+          <a href="#" id="nav-tasks-link" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl">
+            <iconify-icon icon="lucide:check-square" class="text-xl text-white/50"></iconify-icon>
+            <span class="text-white/50 text-[10px]">Tasks</span>
+          </a>
+          <a href="#" id="nav-add-task-link" class="flex items-center justify-center">
+            <div class="w-14 h-14 -mt-6 rounded-2xl glow-button flex items-center justify-center">
+              <iconify-icon icon="lucide:plus" class="text-2xl text-white"></iconify-icon>
+            </div>
+          </a>
+          <a href="#" id="nav-analytics-link" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl">
+            <iconify-icon icon="lucide:bar-chart-3" class="text-xl text-white/50"></iconify-icon>
+            <span class="text-white/50 text-[10px]">Analytics</span>
+          </a>
+          <a href="#" id="nav-settings-link" class="flex flex-col items-center gap-1 px-4 py-2 rounded-xl">
+            <iconify-icon icon="lucide:settings" class="text-xl text-white/50"></iconify-icon>
+            <span class="text-white/50 text-[10px]">Settings</span>
+          </a>
+        </div>
+      </nav>
+    </div>
+  </div>
+</body>
+</html>

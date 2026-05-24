@@ -1,0 +1,756 @@
+================================================================================
+                         ALL ABOUT RISA
+          AI-Powered Life Automation & Productivity Platform
+================================================================================
+Last Updated: 24 May 2026
+
+
+1. PROJECT OVERVIEW
+--------------------------------------------------------------------------------
+   Name        : RISA - Intelligent Assistant
+   Full Form   : Routine Intelligence & Scheduling Assistant
+   Type        : AI-Powered Productivity & Life Automation Web Application
+   Version     : 0.1.0 (Prototype)
+   Description : RISA is a futuristic, AI-driven life automation platform that
+                 helps users master their day through intelligent scheduling,
+                 smart task management, behavior learning, and comprehensive
+                 productivity analytics. It uses Google Gemini 2.5 Flash to
+                 analyze user habits, generate productivity insights, and
+                 intelligently auto-schedule tasks across time blocks. All
+                 task data persists in a local PostgreSQL database via Prisma
+                 ORM with an optimistic-UI approach and local storage fallback.
+
+   Tagline     : "Master Your Day with Intelligent Automation"
+
+
+2. OBJECTIVE / PURPOSE
+--------------------------------------------------------------------------------
+   The primary objective of RISA is to:
+
+   a) Reduce Decision Fatigue
+      - Automatically structure morning, afternoon, and evening time slots
+      - Let AI handle the "when should I do this?" question for users
+
+   b) Intelligent Task Scheduling
+      - Provide AI-powered auto-scheduling (Gemini 2.5 Flash) that distributes
+        tasks across time blocks (morning, afternoon, evening) based on
+        estimated effort, priority, category, and configurable aggressiveness
+      - Allow drag-and-drop manual scheduling with an interactive planner
+      - Falls back to local heuristics when Gemini API is unavailable
+
+   c) Behavior Learning & Adaptation
+      - AI analyzes the user's complete task list and provides behavioral
+        observations (e.g., "tendency to overbook evening blocks")
+      - Identifies peak focus windows based on task completion patterns
+      - Generates personalized productivity suggestions
+
+   d) Boost Productivity
+      - Track productivity scores and task completion rates dynamically
+      - Visualize focus trends, weekly completion charts, and category
+        breakdowns with interactive Recharts-powered visualizations
+      - Offer AI-generated insights and reflections
+
+   e) Persistent Data with Optimistic UI
+      - All tasks persist in PostgreSQL via Prisma ORM through REST API routes
+      - Optimistic UI updates for instant feedback; server sync in background
+      - Local storage backup as a fallback when the API is unreachable
+      - Soft real-time syncing via 12-second polling interval
+
+
+3. KEY FEATURES (DETAILED)
+--------------------------------------------------------------------------------
+
+   3.1 Landing Page (/)
+       - Hero section with gradient text ("Master Your Day with Intelligent
+         Automation") using indigo→purple→pink gradient palette
+       - Radial background gradient effect overlay (indigo at bottom edge)
+       - Three glassmorphism feature highlight cards with hover effects:
+           * Behavior Learning (Brain icon)
+           * Dynamic Smart-Plan (CalendarDays icon)
+           * Automated Routine (Clock icon)
+       - Two CTA buttons: "Launch Planner" (glow button) and "View Dashboard"
+         (outline button)
+       - Page entrance animations: animate-in, fade-in, zoom-in
+
+   3.2 Dashboard (/dashboard)
+       - Dynamic greeting header ("Good Morning, Organizer" + formatted date)
+       - Productivity Score display with animated circular SVG progress ring
+         (gradient stroke: indigo→purple→pink) and percentage calculation
+         (completed / total tasks)
+       - Tasks Done counter (completed / total) with gradient progress bar
+       - Focus Time card (hours of completed task time vs 6-hour daily goal)
+       - Today's Schedule panel showing active tasks by time block
+         (Morning/Afternoon/Evening) with inline completion buttons
+       - Weekly Productivity bar chart (custom SVG, not Recharts) showing
+         completed task count by day of week (Mon-Sun), with hover tooltips
+       - Weekly Focus Trend line/area chart (custom SVG) showing estimated
+         hours per weekday, with gradient fill and highlighted data point
+       - AI Insights panel showing: Peak Focus Hours, Behavior Observation,
+         Suggestion, and At-Risk Tasks (fetched from Gemini or fallback mock)
+       - Quick Add Task form at the bottom for rapid task creation (30min
+         default, medium priority, General category)
+       - Loading skeleton animations while data fetches
+       - All metrics are calculated dynamically from live task data
+
+   3.3 Smart Task Management (/tasks)
+       - Task Statistics Row: Total Tasks, Completed, In Progress, Overdue
+         (overdue = dueDate < today and status != done)
+       - Full-featured toolbar with:
+           * Local search input (filters by title, description, category)
+           * Filter chips: All Tasks, Today (dueDate = today), Upcoming
+             (dueDate > today, not done), Completed (status = done)
+           * Sort dropdown: Due Date, Priority, Name, Status
+       - Create New Task via Shadcn Dialog modal with fields:
+           * Task Title (required)
+           * Description (optional)
+           * Duration in minutes (number input, min 5, step 5)
+           * Priority (Low / Medium / High)
+           * Category (free text, default "Development")
+           * Time Block (Inbox / Morning / Afternoon / Evening)
+           * Due Date (date picker)
+       - Task list cards showing:
+           * Checkbox for bulk selection
+           * Completion toggle circle (gradient fill when done, strikethrough)
+           * Title, overdue badge (animated pulse), status badge
+             (Todo / Scheduled / In Progress / Completed)
+           * Due date, estimated time, category metadata
+           * Priority badge (color-coded: high=pink, medium=amber, low=emerald)
+           * Delete button (trash icon with red hover)
+       - Bulk Actions bar (appears when tasks selected):
+           * Select All toggle for current page
+           * Bulk Complete (marks all selected as "done")
+           * Bulk Delete (deletes all selected)
+       - Pagination: 6 tasks per page, numbered page buttons, prev/next arrows,
+         showing "X - Y of Z tasks" count
+       - Optimistic UI for all CRUD operations
+
+   3.4 Dynamic AI Planner (/planner)
+       - Drag-and-drop interface using @hello-pangea/dnd library
+       - Four droppable columns: Inbox (Unassigned), Morning, Afternoon, Evening
+       - Each column displays:
+           * Icon + label + description (time range)
+           * Task count badge
+           * Total estimated time (formatted as hours/minutes)
+       - Draggable task cards showing: title, description preview (2-line
+         clamp), category, estimated time, priority badge, completion button
+       - Drag visual feedback: purple glow shadow, border highlight, 1.02x scale
+       - Drop zone visual feedback: dashed purple border, subtle ring glow,
+         purple tint background
+       - "AI Auto-Schedule" button that:
+           * Reads user preferences from localStorage (aggressiveness, work
+             hours limit)
+           * Calls Gemini 2.5 Flash via /api/ai/schedule POST route
+           * Gemini distributes unassigned tasks intelligently across blocks
+             based on priority, category, duration, and aggressiveness level
+           * Staggered animation (200ms delay per task) for visual impact
+           * Falls back to local heuristic scheduler if Gemini fails
+       - "Add Event" button opens same creation dialog as Tasks page
+       - SSR hydration safety: shows loading spinner until mounted
+
+   3.5 Productivity Analytics (/analytics)
+       - Time Range Selector: Week / Month / Year toggle buttons (UI only;
+         currently data always shows weekly view regardless of selection)
+       - Key Metrics Row (4 cards):
+           * Avg Score (%) - completion ratio with "Dynamic" badge
+           * Tasks Done - completed count with total
+           * Focus Hours - sum of completed task estimated minutes
+           * Completion Rate (%) - same as avg score (duplicate metric)
+       - Productivity Timeline (large area chart, Recharts):
+           * Daily productivity score (Mon-Sun) using AreaChart
+           * Gradient fill (purple with fade) + gradient stroke line
+           * Custom tooltip showing day, score %, completed/total count
+       - Category Breakdown (donut/pie chart, Recharts):
+           * Tasks grouped by category with donut PieChart
+           * Center shows total task count
+           * Color-coded legend (up to 5 categories displayed)
+           * Custom tooltip showing category name, share %, count
+       - Weekly Tasks bar chart (Recharts):
+           * Completed tasks per weekday (Mon-Sun)
+           * Gradient fill bars (pink→purple)
+           * Custom tooltip
+       - Focus Hours line chart (Recharts):
+           * Daily focus hours trend (Mon-Sun)
+           * Amber-colored line with dot markers
+           * Custom tooltip
+       - AI Insights Panel:
+           * Peak focus window, behavior observation, suggestion
+           * Fetched from Gemini 2.5 Flash via /api/ai/insights
+           * Falls back to local mock data on API failure
+           * Loading skeleton while fetching
+
+   3.6 Settings & Preferences (/settings)
+       - Tabbed sidebar navigation: AI Behavior, Appearance, Notifications,
+         Account
+       - AI Behavior tab:
+           * Auto-Scheduling Aggressiveness: Low / Balanced / High
+             (3 selectable buttons with descriptions)
+           * Work Hours Limit: number input (1-24 hours per day)
+           * These settings are read by the AI Auto-Schedule feature
+       - Appearance tab:
+           * Accent Color Theme: Indigo Glow / Purple Velvet / Neon Pink
+             (3 selectable buttons with color swatches)
+           * Layout Aesthetics info card showing "Frosted Glass UI Active"
+       - Notifications tab:
+           * Daily AI Schedule Summary toggle (email digest)
+           * Overdue & Risk Warnings toggle (push reminders)
+           * Auto-Rescheduling Alerts toggle (AI alerts)
+           * All use custom CSS toggle-switch component
+       - Account tab:
+           * Display Name input
+           * Email Address input
+           * Account Level badge ("RISA Prototype Member" / "Pro Tier")
+       - "Save Preferences" button saves all settings to localStorage
+       - Success feedback: "Preferences saved successfully!" with animated
+         checkmark (auto-dismisses after 3 seconds)
+
+   3.7 Navigation & Layout
+       - Desktop: Fixed sidebar (w-72) with:
+           * RISA logo + branding (gradient icon with Sparkles)
+           * Nav links: Dashboard, Tasks (with count badge), Planner,
+             Analytics, Settings
+           * Active link highlight (purple background + right border)
+           * "AI Ready" status card with "AI Auto-Schedule" button
+           * User profile section (hardcoded "John Doe" / avatar initials "JD")
+       - Mobile: Bottom navigation bar with:
+           * Home, Tasks, Analytics, Settings icons
+           * Floating "+" button (glow effect, elevated above nav bar)
+           * Active tab highlighted in purple
+       - Header component (per-page):
+           * Page title + subtitle
+           * Search bar with ⌘K shortcut hint (Dashboard only)
+           * Notification bell with pink dot indicator
+           * User avatar (initials "JD")
+           * Mobile hamburger menu button
+       - Ambient Background: Fixed position, three blurred gradient orbs
+         (purple, indigo, pink) for depth effect
+
+
+4. TECHNOLOGY STACK
+--------------------------------------------------------------------------------
+
+   FRONTEND FRAMEWORK:
+   - Next.js 16.2.3 (App Router architecture)
+   - React 19.2.4
+   - TypeScript 5.x
+
+   STYLING:
+   - Tailwind CSS 4.x (with PostCSS via @tailwindcss/postcss)
+   - Shadcn UI (v4.2.0) - Component library
+     (button, card, dialog, input, label, select, textarea)
+   - Base UI (@base-ui/react ^1.3.0) - Low-level headless components
+   - tw-animate-css 1.4.0 - Animation utilities
+   - Dark theme by default (class="dark" on <html>)
+   - Glassmorphism design with backdrop-blur effects
+   - Gradient text effects (indigo → purple → pink palette)
+   - Custom CSS design system in globals.css (glass-card, glow-button,
+     gradient-text, task-card, sidebar-link, toggle-switch, etc.)
+
+   STATE MANAGEMENT:
+   - Zustand 5.0.12 (lightweight store for task state, CRUD, and polling)
+
+   BACKEND / DATABASE:
+   - PostgreSQL (local, on port 5432, database: risa_db)
+   - Prisma ORM 5.22.0 (@prisma/client + prisma CLI)
+   - Prisma schema: single "Task" model with UUID primary key
+   - Next.js API Routes (App Router) for REST endpoints:
+       * GET  /api/tasks          → Fetch all tasks
+       * POST /api/tasks          → Create a new task
+       * PUT  /api/tasks/[id]     → Update a task by ID
+       * DELETE /api/tasks/[id]   → Delete a task by ID
+       * GET  /api/ai/insights    → Generate AI productivity insights
+       * POST /api/ai/schedule    → AI auto-schedule unassigned tasks
+   - Singleton Prisma client pattern (dev hot-reload safe)
+
+   AI / INTELLIGENCE:
+   - Google Gemini 2.5 Flash (via @google/genai ^2.6.0)
+   - Server-side API routes call Gemini with structured JSON output
+     (responseMimeType: "application/json" + responseSchema)
+   - /api/ai/insights: Gemini analyzes full task list from PostgreSQL and
+     returns: score (0-100), peakHours, suggestion, atRisk[], and
+     behaviorObservation
+   - /api/ai/schedule: Gemini receives unassigned tasks + user settings
+     (aggressiveness, workHoursLimit) and returns taskId→block mapping
+   - Client-side lib/ai.ts wraps API calls with graceful fallbacks:
+     * generateAIInsights() → calls /api/ai/insights, falls back to mock
+     * autoBalanceSchedule() → calls /api/ai/schedule, falls back to local
+       heuristic scheduler (least-load-first distribution algorithm)
+   - Firebase SDK (^12.12.0) is still listed as a dependency but is NO LONGER
+     ACTIVELY USED — the project has fully migrated to PostgreSQL/Prisma
+
+   DRAG & DROP:
+   - @hello-pangea/dnd 18.0.1 (fork of react-beautiful-dnd)
+
+   ANIMATIONS:
+   - Framer Motion 12.38.0 (imported but only used on landing page)
+   - Custom CSS keyframe animations: fade-in-up, fade-in, slide-in-left,
+     pulse-glow, counter-up, bar-grow, line-draw
+   - Staggered delay classes: delay-100 through delay-800
+
+   DATA VISUALIZATION:
+   - Recharts 3.8.1 (AreaChart, BarChart, PieChart, LineChart)
+     Used on the Analytics page
+   - Custom SVG charts on the Dashboard page (bar chart + line/area chart)
+
+   ICONS:
+   - Lucide React 1.8.0
+
+   FONTS:
+   - General Sans (primary body font, loaded via fontshare.com)
+   - Cabinet Grotesk (display/heading font, loaded via fontshare.com)
+
+   UTILITIES:
+   - clsx + tailwind-merge (conditional class merging via cn() helper)
+   - class-variance-authority (component variant management, used by Shadcn)
+   - date-fns 4.1.0 (listed as dependency, not actively imported in source)
+
+
+5. PROJECT STRUCTURE
+--------------------------------------------------------------------------------
+
+   RISA/
+   ├── .env                        # Database URL + Gemini API key
+   ├── .env.local                  # Firebase env vars + Database URL + Gemini key
+   ├── .gitignore
+   ├── package.json
+   ├── tsconfig.json
+   ├── next.config.ts              # Next.js config (empty/default)
+   ├── postcss.config.mjs          # PostCSS with @tailwindcss/postcss
+   ├── eslint.config.mjs           # ESLint 9 config
+   ├── components.json             # Shadcn UI configuration
+   ├── AGENTS.md                   # Next.js agent rules
+   ├── CLAUDE.md                   # Claude AI rules (minimal)
+   ├── README.md
+   ├── all_about_RISA.txt          # This document
+   │
+   ├── prisma/
+   │   ├── schema.prisma           # Database schema (Task model)
+   │   └── migrations/
+   │       ├── 20260523190637_init/ # Initial migration
+   │       └── migration_lock.toml
+   │
+   ├── public/                     # Static assets (favicon)
+   │
+   └── src/
+       ├── app/                    # Next.js App Router pages
+       │   ├── layout.tsx          # Root layout (fonts, metadata, StoreInitializer)
+       │   ├── page.tsx            # Landing / Hero page
+       │   ├── globals.css         # Global styles, design system, animations
+       │   ├── favicon.ico
+       │   ├── dashboard/
+       │   │   └── page.tsx        # Dashboard overview page (610 lines)
+       │   ├── tasks/
+       │   │   └── page.tsx        # Task management page (653 lines)
+       │   ├── planner/
+       │   │   └── page.tsx        # Drag-and-drop planner page (436 lines)
+       │   ├── analytics/
+       │   │   └── page.tsx        # Analytics & AI insights page (586 lines)
+       │   ├── settings/
+       │   │   └── page.tsx        # User preferences page (333 lines)
+       │   └── api/
+       │       ├── tasks/
+       │       │   ├── route.ts    # GET all tasks / POST new task
+       │       │   └── [id]/
+       │       │       └── route.ts # PUT update / DELETE task by ID
+       │       └── ai/
+       │           ├── insights/
+       │           │   └── route.ts # GET Gemini AI productivity insights
+       │           └── schedule/
+       │               └── route.ts # POST Gemini AI auto-scheduling
+       │
+       ├── components/
+       │   ├── StoreInitializer.tsx  # Boots Zustand polling on app startup
+       │   ├── layout/
+       │   │   ├── AppLayout.tsx     # Root wrapper (Sidebar + MobileNav + BG)
+       │   │   ├── Sidebar.tsx       # Desktop sidebar navigation
+       │   │   ├── Header.tsx        # Page header with search + notifications
+       │   │   ├── MobileNav.tsx     # Mobile bottom navigation bar
+       │   │   └── AmbientBackground.tsx # Fixed gradient orb background
+       │   └── ui/                   # Shadcn UI components
+       │       ├── button.tsx
+       │       ├── card.tsx
+       │       ├── dialog.tsx
+       │       ├── input.tsx
+       │       ├── label.tsx
+       │       ├── select.tsx
+       │       └── textarea.tsx
+       │
+       ├── lib/
+       │   ├── ai.ts               # AI client (Gemini API + fallback logic)
+       │   ├── prisma.ts           # Prisma client singleton
+       │   └── utils.ts            # cn() class merging helper
+       │
+       ├── store/
+       │   └── taskStore.ts        # Zustand store (CRUD + polling + fallback)
+       │
+       └── types/
+           └── index.ts            # TypeScript type definitions
+
+
+6. DATA MODELS
+--------------------------------------------------------------------------------
+
+   Task (TypeScript Interface — src/types/index.ts):
+   ├── id               : string              (UUID from Prisma)
+   ├── title            : string              (Task name, required)
+   ├── description      : string?             (Optional details)
+   ├── status           : 'todo' | 'in-progress' | 'done'
+   ├── estimatedMinutes : number              (Time estimate in minutes)
+   ├── timeBlock        : 'morning' | 'afternoon' | 'evening' | undefined
+   ├── priority         : 'low' | 'medium' | 'high' (optional, defaults medium)
+   ├── category         : string?             (e.g. "Development", "Design")
+   ├── dueDate          : string?             (ISO date string "YYYY-MM-DD")
+   └── createdAt        : Date                (Auto-generated timestamp)
+
+   Task (Prisma Schema — prisma/schema.prisma):
+   ├── id               : String   @id @default(uuid())
+   ├── title            : String
+   ├── description      : String?
+   ├── status           : String   @default("todo")
+   ├── estimatedMinutes : Int      @default(30)
+   ├── timeBlock        : String?
+   ├── priority         : String   @default("medium")
+   ├── category         : String   @default("General")
+   ├── dueDate          : String?
+   └── createdAt        : DateTime @default(now())
+
+   DaySchedule (TypeScript Interface):
+   ├── morning          : Task[]
+   ├── afternoon        : Task[]
+   ├── evening          : Task[]
+   └── unassigned       : Task[]
+
+   Mock Tasks (6 hardcoded in taskStore.ts as fallback):
+   ├── "Review pull requests"          (30m, morning, done, Development)
+   ├── "Design system update"          (120m, afternoon, in-progress, Design)
+   ├── "API Integration for dashboard" (180m, afternoon, todo, Development)
+   ├── "Client presentation deck"      (90m, unassigned, todo, Marketing)
+   ├── "Write documentation..."        (120m, evening, todo, Development)
+   └── "Team standup meeting"          (15m, morning, done, Meetings)
+
+
+7. NAVIGATION STRUCTURE
+--------------------------------------------------------------------------------
+
+   /              → Landing Page (Hero + Feature Cards)
+   /dashboard     → Dashboard Overview (Scores, Schedule, Charts, AI Insights)
+   /tasks         → Task Management (Create, Search, Filter, Sort, Bulk Ops)
+   /planner       → Dynamic Planner (Drag-and-Drop + AI Auto-Schedule)
+   /analytics     → Productivity Analytics (Recharts + AI Insights)
+   /settings      → User Preferences (AI Tuning, Appearance, Notifications,
+                    Account)
+
+   API Endpoints:
+   GET    /api/tasks          → List all tasks from PostgreSQL
+   POST   /api/tasks          → Create a new task in PostgreSQL
+   PUT    /api/tasks/[id]     → Update a task by ID
+   DELETE /api/tasks/[id]     → Delete a task by ID
+   GET    /api/ai/insights    → Gemini-powered productivity insights
+   POST   /api/ai/schedule    → Gemini-powered auto-scheduling
+
+
+8. DESIGN PHILOSOPHY
+--------------------------------------------------------------------------------
+
+   - Dark-first design with deep black background (#0a0a14)
+   - Glassmorphism: backdrop-blur-xl, semi-transparent borders, frosted panels
+   - Indigo-Purple-Pink gradient palette for accent elements
+   - Glow effects on primary buttons (box-shadow with purple opacity)
+   - Ambient background with three blurred gradient orbs
+   - Custom CSS design system (glass-card, glow-button, gradient-text, etc.)
+   - Smooth page entrance animations with staggered delays
+   - Hover micro-interactions: card lift, border glow, scale transforms
+   - Responsive layout: mobile bottom nav bar, desktop fixed sidebar
+   - Premium, futuristic aesthetic throughout
+   - Custom scrollbar styling (thin, purple-tinted)
+   - Custom checkbox and toggle switch implementations
+   - Font pairing: General Sans (body) + Cabinet Grotesk (display headings)
+
+
+9. DATABASE & BACKEND CONFIGURATION
+--------------------------------------------------------------------------------
+
+   PostgreSQL:
+   - Host: localhost:5432
+   - Database: risa_db
+   - Schema: public
+   - ORM: Prisma 5.22.0
+
+   Required environment variables (.env or .env.local):
+
+   DATABASE_URL="postgresql://postgres:<password>@localhost:5432/risa_db?schema=public"
+   GEMINI_API_KEY="<your-gemini-api-key>"
+
+   Firebase (legacy, still in .env.local but not actively used):
+   NEXT_PUBLIC_FIREBASE_API_KEY=<key>
+   NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<domain>
+   NEXT_PUBLIC_FIREBASE_PROJECT_ID=<project-id>
+   NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<bucket>
+   NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<sender-id>
+   NEXT_PUBLIC_FIREBASE_APP_ID=<app-id>
+
+   Data Flow:
+   1. StoreInitializer.tsx boots on app startup
+   2. Zustand taskStore calls GET /api/tasks to fetch from PostgreSQL
+   3. Tasks are cached in Zustand state + backed up to localStorage
+   4. CRUD operations use optimistic UI (instant local update) then sync
+      to PostgreSQL via API routes
+   5. Polling every 12 seconds for soft real-time syncing
+   6. If API fails, falls back to localStorage backup or mock data
+
+
+10. HOW TO RUN
+--------------------------------------------------------------------------------
+
+    Prerequisites:
+    - Node.js (v18+)
+    - PostgreSQL running locally on port 5432
+    - A Google Gemini API key (for AI features)
+
+    Steps:
+    1. Clone the repository
+    2. Install dependencies:       npm install
+    3. Create .env with:
+         DATABASE_URL="postgresql://postgres:<password>@localhost:5432/risa_db?schema=public"
+         GEMINI_API_KEY="<your-gemini-api-key>"
+    4. Create the database:        createdb risa_db (or via pgAdmin)
+    5. Run Prisma migration:       npx prisma migrate dev
+    6. Generate Prisma client:     npx prisma generate
+    7. Run the development server: npm run dev
+    8. Open http://localhost:3000 in your browser
+
+
+================================================================================
+11. FEATURE STATUS — WORKING vs NOT WORKING (DETAILED AUDIT)
+================================================================================
+
+    ✅ = FULLY WORKING   |   ⚠️ = PARTIALLY WORKING   |   ❌ = NOT WORKING
+
+    ─── LANDING PAGE (/) ───
+    ✅ Hero section with gradient text and animated entrance
+    ✅ Three feature highlight cards with hover effects
+    ✅ CTA buttons linking to /planner and /dashboard
+    ✅ Radial background gradient overlay
+    ✅ Responsive layout (mobile + desktop)
+
+    ─── DASHBOARD (/dashboard) ───
+    ✅ Productivity score calculation (completed/total %)
+    ✅ Animated circular SVG progress ring
+    ✅ Tasks Done counter with progress bar
+    ✅ Focus Time calculation (completed task minutes → hours)
+    ✅ Today's Schedule panels (Morning/Afternoon/Evening)
+    ✅ Inline task completion from schedule panels
+    ✅ Weekly Productivity bar chart (custom SVG, dynamic from task data)
+    ✅ Weekly Focus Trend line chart (custom SVG, dynamic from task data)
+    ✅ AI Insights panel (Gemini-powered with fallback)
+    ✅ Quick Add Task form
+    ✅ Loading states and skeleton animations
+    ⚠️ Greeting is hardcoded ("Good Morning, Organizer") — does NOT change
+       based on time of day or user name from settings
+    ⚠️ "Dynamic" badge says "live score" but chart data is based on
+       createdAt day-of-week, not actual daily completion timestamps
+    ❌ Header search bar (visible on dashboard) is not functional — input
+       accepts text but does not filter anything
+
+    ─── TASK MANAGEMENT (/tasks) ───
+    ✅ Task creation via Shadcn Dialog modal with all fields
+    ✅ Task status toggle (todo ↔ done) via completion circle button
+    ✅ Task deletion via trash icon
+    ✅ Optimistic UI for all CRUD operations (instant feedback)
+    ✅ Local search filtering (by title, description, category)
+    ✅ Filter chips: All Tasks, Today, Upcoming, Completed
+    ✅ Sort by: Due Date, Priority, Name, Status
+    ✅ Pagination (6 per page) with page numbers and prev/next
+    ✅ Bulk selection (individual + select all on page)
+    ✅ Bulk Complete and Bulk Delete actions
+    ✅ Overdue badge (animated pulse) for tasks past due date
+    ✅ Status badges (Todo, Scheduled, In Progress, Completed)
+    ✅ Priority badges (color-coded: high/medium/low)
+    ✅ Category, due date, and estimated time metadata display
+    ✅ PostgreSQL persistence via API routes
+    ✅ localStorage fallback when API is unreachable
+    ⚠️ No inline task editing — you can only toggle status or delete.
+       There is no "Edit Task" dialog or inline editing for title,
+       description, due date, priority, etc.
+    ⚠️ "In Progress" status exists in the type system but there is NO UI
+       mechanism to set a task to "in-progress". The toggle only switches
+       between "todo" and "done". Only mock tasks use "in-progress".
+    ❌ Due date filtering ("Today" filter) relies on dueDate field, but
+       quick-add task from Dashboard doesn't set a due date, so newly
+       created tasks from Dashboard won't appear under "Today"
+
+    ─── AI PLANNER (/planner) ───
+    ✅ Drag-and-drop between 4 columns (Inbox, Morning, Afternoon, Evening)
+    ✅ Visual drag feedback (purple glow, scale, border highlight)
+    ✅ Drop zone visual feedback (dashed border, ring, tint)
+    ✅ Task count and total time per column header
+    ✅ Task cards showing title, description, category, time, priority
+    ✅ Inline task completion from planner cards
+    ✅ "Add Event" dialog with full task creation form
+    ✅ AI Auto-Schedule button with Gemini 2.5 Flash backend
+    ✅ Staggered animation for AI-scheduled tasks (200ms per task)
+    ✅ Local heuristic fallback when Gemini API fails
+    ✅ Reads user settings (aggressiveness, work hours) from localStorage
+    ✅ SSR hydration safety (loading spinner until mounted)
+    ✅ Completed tasks auto-hidden from planner columns
+    ⚠️ Drag-and-drop only works for moving tasks between columns — you
+       cannot reorder tasks WITHIN the same column
+    ⚠️ The sidebar "AI Auto-Schedule" button (in Sidebar.tsx) does nothing —
+       it is not wired to the auto-schedule logic (only the planner page
+       button works)
+    ❌ No undo for AI Auto-Schedule — once tasks are moved, there's no
+       "revert" or undo action
+
+    ─── ANALYTICS (/analytics) ───
+    ✅ Four key metric cards (Avg Score, Tasks Done, Focus Hours,
+       Completion Rate) with animated counters
+    ✅ Productivity Timeline area chart (Recharts, Mon-Sun)
+    ✅ Category Breakdown donut/pie chart (Recharts) with legend
+    ✅ Weekly Tasks completed bar chart (Recharts)
+    ✅ Focus Hours trend line chart (Recharts)
+    ✅ Custom tooltips for all four Recharts visualizations
+    ✅ AI Insights panel with Gemini data (or fallback)
+    ✅ Loading skeleton animations
+    ⚠️ Time Range Selector (Week/Month/Year) is VISUAL ONLY — toggling
+       between Week, Month, and Year does nothing. The data always shows
+       the same weekly breakdown regardless of selection.
+    ⚠️ "Avg Score" and "Completion Rate" are identical metrics (both show
+       completedCount / totalCount * 100)
+    ⚠️ All chart data is based on createdAt day-of-week mapping, not real
+       calendar dates. If all tasks were created on the same day, all
+       chart data concentrates on one day bar.
+
+    ─── SETTINGS (/settings) ───
+    ✅ Tab navigation (AI Behavior, Appearance, Notifications, Account)
+    ✅ AI Behavior: Aggressiveness selector (Low/Balanced/High)
+    ✅ AI Behavior: Work Hours Limit input
+    ✅ Appearance: Accent Color selector (Indigo/Purple/Pink)
+    ✅ Notifications: 3 toggle switches for email/push/AI alerts
+    ✅ Account: Display Name and Email inputs
+    ✅ Account Level badge ("RISA Prototype Member" / "Pro Tier")
+    ✅ Save Preferences to localStorage
+    ✅ Success feedback animation ("Preferences saved successfully!")
+    ✅ Load saved preferences from localStorage on mount
+    ⚠️ Accent Color selection saves to localStorage but does NOT actually
+       change the app's theme. The UI always stays indigo-purple regardless.
+    ❌ Notification toggles save to localStorage but NO notification system
+       exists — no email digests, no push notifications, no alerts are sent
+    ❌ Account Name/Email save to localStorage but are NOT reflected in the
+       sidebar or header (sidebar always shows hardcoded "John Doe" / "JD")
+    ❌ No user authentication system — anyone accessing the app shares the
+       same task database
+
+    ─── NAVIGATION & LAYOUT ───
+    ✅ Desktop sidebar with active link highlighting
+    ✅ Mobile bottom nav bar with floating "+" button
+    ✅ Ambient background gradient orbs
+    ✅ Header with page title, subtitle, user avatar
+    ✅ Notification bell icon with pink indicator dot
+    ⚠️ Mobile hamburger menu button (visible on mobile) does NOTHING —
+       no menu slides out or toggles
+    ❌ Header search bar (on Dashboard) is decorative — accepts input but
+       performs no filtering or navigation
+    ❌ Notification bell is non-functional — no notification panel or list
+    ❌ ⌘K keyboard shortcut hint (shown next to search) is not implemented
+
+    ─── API & DATA LAYER ───
+    ✅ GET /api/tasks — fetches all tasks from PostgreSQL
+    ✅ POST /api/tasks — creates tasks with validation (title required)
+    ✅ PUT /api/tasks/[id] — updates any task field
+    ✅ DELETE /api/tasks/[id] — deletes task by UUID
+    ✅ GET /api/ai/insights — Gemini productivity analysis
+    ✅ POST /api/ai/schedule — Gemini auto-scheduling
+    ✅ Prisma client singleton (hot-reload safe)
+    ✅ Optimistic UI with server sync
+    ✅ localStorage fallback for offline resilience
+    ✅ 12-second polling for soft real-time updates
+    ⚠️ No authentication/authorization — API routes are completely open
+    ⚠️ No input sanitization beyond basic "title required" check
+    ⚠️ Gemini API calls have no rate limiting or caching — every page
+       load that triggers AI insights makes a new API call
+    ❌ Firebase SDK is installed (^12.12.0) but completely unused — dead
+       dependency adding ~200KB+ to the bundle
+
+
+================================================================================
+12. KNOWN ISSUES & TECHNICAL DEBT
+================================================================================
+
+    1. DEAD DEPENDENCY: Firebase SDK (firebase ^12.12.0) is listed in
+       package.json and .env.local but no code imports or uses it. Should
+       be removed to reduce bundle size.
+
+    2. DUPLICATE ENV FILES: Both .env and .env.local contain DATABASE_URL
+       and GEMINI_API_KEY with the same values. Should consolidate.
+
+    3. NO AUTHENTICATION: The entire app is single-user with no login.
+       All tasks are shared globally. The sidebar hardcodes "John Doe".
+
+    4. NO TASK EDITING: Once a task is created, its title, description,
+       priority, category, due date, etc. cannot be modified. Only status
+       (todo/done) and timeBlock can be changed.
+
+    5. NO "IN-PROGRESS" UI: The type system supports 'in-progress' status
+       but no UI action sets it. Tasks can only toggle between todo↔done.
+
+    6. SETTINGS DON'T PROPAGATE: Accent color, user name, email, and
+       notification preferences are saved but never actually applied:
+       - Accent color doesn't change the theme
+       - User name doesn't update sidebar/header
+       - Notifications don't exist
+
+    7. ANALYTICS TIME RANGE IS FAKE: Week/Month/Year selector buttons
+       don't change the data — always shows the same weekly view.
+
+    8. CHART DATA ACCURACY: Charts derive data from createdAt day-of-week,
+       not actual calendar date ranges. This means "weekly" data is not
+       a real week view but a day-of-week aggregation across all time.
+
+    9. MOBILE HAMBURGER MENU: The menu button renders but has no onClick
+       handler or drawer/overlay implementation.
+
+    10. SEARCH BAR (DASHBOARD): Accepts input visually but has no
+        filtering logic connected to it.
+
+    11. GEMINI API CALLS NOT CACHED: Every dashboard/analytics page load
+        triggers a new Gemini API call. Should implement caching or
+        debouncing.
+
+    12. FRAMER MOTION UNDERUSED: framer-motion is installed (12.38.0) and
+        imported on the landing page but only for the import — the actual
+        motion components are not visibly used (animations are CSS-based).
+
+    13. date-fns UNUSED: Listed as dependency (^4.1.0) but never imported
+        in any source file.
+
+    14. SIDEBAR AI BUTTON: The "AI Auto-Schedule" button in the sidebar
+        is not connected to any logic.
+
+
+================================================================================
+13. FUTURE SCOPE / ROADMAP
+================================================================================
+
+    - User authentication (Firebase Auth or NextAuth.js)
+    - Task editing (inline or via dialog)
+    - "In-progress" status UI (start/pause task workflow)
+    - Working notification system (email, push, in-app)
+    - Apply accent color theme changes from Settings
+    - Dynamic greeting based on time of day + user name
+    - Real calendar date-range analytics (not just day-of-week)
+    - Gemini API response caching/debouncing
+    - Remove dead dependencies (Firebase, date-fns, framer-motion)
+    - Mobile menu implementation
+    - Working search (global ⌘K command palette)
+    - Calendar view integration
+    - Recurring tasks and habits tracking
+    - Multi-user support and collaboration
+    - Mobile app version (React Native / PWA)
+    - Export/Import task data
+    - Integration with Google Calendar, Notion, etc.
+    - Task reordering within planner columns
+    - Undo/redo for AI auto-scheduling
+
+
+================================================================================
+                      END OF DOCUMENT
+================================================================================

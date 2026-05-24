@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String           @id // Firebase uid
+  email          String           @unique
+  name           String           @default("User")
+  motivationTone String           @default("supportive")
+  aggressiveness String           @default("balanced")
+  focusStart     String           @default("09:00")
+  focusEnd       String           @default("18:00")
+  createdAt      DateTime         @default(now())
+  habits         Habit[]
+  dailyTasks     DailyTask[]
+  aiConversations AIConversation[]
+}
+
+model Habit {
+  id          String            @id @default(uuid())
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  icon        String            @default("📌")
+  color       String            @default("#8b5cf6")
+  frequency   String            @default("daily")
+  targetDays  String?
+  category    String            @default("General")
+  priority    String            @default("medium")
+  archived    Boolean           @default(false)
+  sortOrder   Int               @default(0)
+  createdAt   DateTime          @default(now())
+  completions HabitCompletion[]
+}
+
+model HabitCompletion {
+  id        String   @id @default(uuid())
+  habitId   String
+  date      String
+  completed Boolean  @default(true)
+  note      String?
+  habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([habitId, date])
+}
+
+model DailyTask {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  completed Boolean  @default(false)
+  date      String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model AIConversation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      String
+  content   String
+  createdAt DateTime @default(now())
+}
