@@ -113,14 +113,11 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
               </button>
             </div>
           </div>
-          <p className="text-[9px] text-white/30 uppercase mt-0.5 tracking-wider">
-            {habit.category}
-          </p>
         </td>
 
         {/* Day Cells */}
         <td className="py-3.5 px-3">
-          <div className="flex gap-[3px] overflow-x-auto scrollbar-none max-w-[280px] sm:max-w-none">
+          <div className="flex gap-[3px]">
             {days.map((day) => {
               const isCompleted = completionDates.includes(day.date);
               const isFuture = day.isFuture;
@@ -136,7 +133,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
                   disabled={isFuture}
                   onClick={() => onToggle(habit.id, day.date)}
                   title={`${habit.name} - ${day.date}${day.isToday ? " (Today)" : ""}`}
-                  className={`${cellClass} shrink-0 relative ${day.isRecent ? "flex" : "hidden md:flex"}`}
+                  className={`${cellClass} shrink-0 relative flex`}
                 >
                   {isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
                   {day.isToday && !isCompleted && (

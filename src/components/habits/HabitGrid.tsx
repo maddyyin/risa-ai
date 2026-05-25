@@ -83,7 +83,7 @@ export function HabitGrid() {
             <table className="w-full border-collapse">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.01]">
-                  <th className="py-3 pl-4 pr-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/40">
+                  <th className="py-3 pl-4 pr-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/40 sticky left-0 bg-[#111118] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">
                     Habit
                   </th>
                   <th className="py-3 px-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/40">
@@ -91,7 +91,7 @@ export function HabitGrid() {
                       {days.map((day) => (
                         <span
                           key={day.date}
-                          className={`w-[28px] text-center ${day.isRecent ? "inline-block" : "hidden md:inline-block"} ${
+                          className={`w-[34px] md:w-[28px] shrink-0 text-center inline-block ${
                             day.isToday ? "text-purple-400 font-extrabold" : ""
                           }`}
                         >
