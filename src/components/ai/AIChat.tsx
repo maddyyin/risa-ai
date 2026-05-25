@@ -22,14 +22,16 @@ export function AIChat() {
   const { chatMessages, chatLoading, sendChatMessage, fetchChatHistory } = useHabitStore();
   const [input, setInput] = useState("");
   const [placeholderIdx, setPlaceholderIdx] = useState(0);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchChatHistory();
   }, [fetchChatHistory]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [chatMessages, chatLoading]);
 
   // Rotate placeholders every 5 seconds
@@ -65,7 +67,7 @@ export function AIChat() {
       </div>
 
       {/* Messages list */}
-      <div className="flex-1 overflow-y-auto pr-1 space-y-3 mb-3 scrollbar-thin">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto pr-1 space-y-3 mb-3 scrollbar-thin">
         {chatMessages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center px-4">
             <p className="text-white/40 text-sm leading-relaxed max-w-[280px]">
@@ -99,7 +101,6 @@ export function AIChat() {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Suggestion Chips */}
