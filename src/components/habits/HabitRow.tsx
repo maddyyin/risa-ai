@@ -79,7 +79,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
     <>
       <tr className={`border-b border-white/[0.04] last:border-0 hover:bg-white/[0.01] transition-colors group relative ${isPerfectMonth ? 'shadow-[inset_0_0_15px_rgba(168,85,247,0.15)] bg-purple-500/[0.02]' : ''}`}>
         {/* Habit Info */}
-        <td className="py-3.5 pl-4 pr-3 min-w-[140px] max-w-[180px]">
+        <td className="py-3.5 pl-4 pr-2 min-w-[150px] max-w-[180px] sticky left-0 bg-[#111118] group-hover:bg-[#15151e] z-10 shadow-[4px_0_12px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-2">
             <span 
               className="text-base select-none transition-all duration-500"

@@ -79,8 +79,8 @@ export function HabitGrid() {
           </div>
         ) : (
           /* Scrollable table container */
-          <div className="overflow-x-auto scrollbar-thin">
-            <table className="w-full border-collapse">
+          <div className="overflow-x-auto scrollbar-none sm:scrollbar-thin pb-1">
+            <table className="w-full min-w-max border-collapse">
               <thead>
                 <tr className="border-b border-white/[0.06] bg-white/[0.01]">
                   <th className="py-3 pl-4 pr-3 text-left text-[10px] font-bold uppercase tracking-wider text-white/40 sticky left-0 bg-[#111118] z-10 shadow-[2px_0_4px_rgba(0,0,0,0.1)]">

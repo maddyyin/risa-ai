@@ -104,8 +104,12 @@ export default function AnalyticsPage() {
             </div>
           </section>
 
-          <section className="card-surface p-5 flex flex-col justify-center">
-            <ProductivityChart data={stats.heatmapData} days={30} />
+          <section className="card-surface p-5 flex flex-col justify-center overflow-hidden">
+            <div className="w-full overflow-x-auto scrollbar-none">
+              <div className="min-w-[600px] py-1">
+                <ProductivityChart data={stats.heatmapData} days={30} />
+              </div>
+            </div>
           </section>
         </div>
 
