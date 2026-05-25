@@ -1,14 +1,21 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useHabitStore } from "@/store/habitStore";
 import { HabitRow } from "./HabitRow";
 import { CreateHabitDialog } from "./CreateHabitDialog";
 import { CategoryFilter } from "./CategoryFilter";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function HabitGrid() {
   const { habits, toggleCompletion } = useHabitStore();
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  // Month navigation state
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  });
 
   // Filter habits by category
   const filteredHabits = useMemo(() => {
@@ -16,12 +23,12 @@ export function HabitGrid() {
     return habits.filter((h) => h.category === selectedCategory);
   }, [habits, selectedCategory]);
 
-  // Compute days of current month
+  // Compute days of viewed month
   const days = useMemo(() => {
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    const year = today.getFullYear();
-    const month = today.getMonth(); // 0 = Jan, 11 = Dec
+    const year = viewDate.getFullYear();
+    const month = viewDate.getMonth(); // 0 = Jan, 11 = Dec
     const numDays = new Date(year, month + 1, 0).getDate();
 
     const result = [];
@@ -38,14 +45,28 @@ export function HabitGrid() {
 
     // Determine the index of today to calculate recent days
     const todayIndex = result.findIndex(d => d.isToday);
-    // If today is not in the current month (edge case), default to end of array
     const baseIndex = todayIndex >= 0 ? todayIndex : result.length - 1;
 
     return result.map((d, index) => ({
       ...d,
       isRecent: index >= baseIndex - 6 && index <= baseIndex
     }));
-  }, []);
+  }, [viewDate]);
+
+  const handlePrevMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1));
+  };
+  
+  const isCurrentMonth = useMemo(() => {
+    const today = new Date();
+    return viewDate.getMonth() === today.getMonth() && viewDate.getFullYear() === today.getFullYear();
+  }, [viewDate]);
+
+  const monthLabel = viewDate.toLocaleString("en-US", { month: "long", year: "numeric" });
 
   if (habits.length === 0) {
     return (
@@ -66,11 +87,37 @@ export function HabitGrid() {
 
   return (
     <div className="space-y-3">
-      {/* Category Filter */}
-      <CategoryFilter
-        selectedCategory={selectedCategory}
-        onSelect={setSelectedCategory}
-      />
+      {/* Controls Header: Category Filter & Month Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CategoryFilter
+          selectedCategory={selectedCategory}
+          onSelect={setSelectedCategory}
+        />
+        
+        {/* Month Navigation */}
+        <div className="flex items-center gap-2 bg-[#111118] border border-white/[0.06] rounded-lg p-1 w-fit">
+          <button 
+            onClick={handlePrevMonth}
+            className="p-1.5 rounded-md text-white/40 hover:text-white/80 hover:bg-white/[0.05] transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="text-xs font-semibold text-white/80 min-w-[100px] text-center select-none">
+            {monthLabel}
+          </span>
+          <button 
+            onClick={handleNextMonth}
+            disabled={isCurrentMonth}
+            className={`p-1.5 rounded-md transition-colors ${
+              isCurrentMonth 
+                ? "text-white/10 cursor-not-allowed" 
+                : "text-white/40 hover:text-white/80 hover:bg-white/[0.05]"
+            }`}
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
 
       <div className="card-surface overflow-hidden">
         {filteredHabits.length === 0 ? (
