@@ -2,7 +2,7 @@ import OpenAI from 'openai';
 
 // Centralized configuration for Groq API
 const GROQ_BASE_URL = 'https://api.groq.com/openai/v1';
-const MAIN_MODEL = 'llama-3.3-70b-versatile';
+const MAIN_MODEL = 'llama-3.1-8b-instant';
 const DEFAULT_TIMEOUT_MS = 8000; // 8 seconds timeout to prevent application hanging
 
 const groqApiKey = process.env.GROQ_API_KEY;
