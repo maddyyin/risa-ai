@@ -24,8 +24,13 @@ export function InsightCard({ type, message, habitName }: InsightCardProps) {
 
   // Split message into a headline and secondary recommendation
   const { headline, subtext } = useMemo(() => {
-    if (!message) return { headline: "", subtext: "" };
+    if (!message) return { headline: "Keep building your consistency.", subtext: "" };
     
+    // Check if the message is too short to be split usefully
+    if (message.length < 40) {
+        return { headline: message, subtext: "" };
+    }
+
     // Split on first period followed by space
     const index = message.indexOf(". ");
     if (index === -1) {

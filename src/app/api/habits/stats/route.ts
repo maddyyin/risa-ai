@@ -2,27 +2,27 @@ import { NextResponse, NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getAuthenticatedUser } from '@/lib/auth-backend';
 
-function getStreakStats(datesStr: string[]) {
+function getStreakStats(datesStr: string[], todayStr: string) {
   const uniqueDates = [...new Set(datesStr)];
   if (uniqueDates.length === 0) return { currentStreak: 0, longestStreak: 0 };
 
-  const today = new Date();
-  const todayStr = today.toISOString().split('T')[0];
-  const yesterday = new Date();
+  const today = new Date(todayStr + "T12:00:00");
+  const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
   const hasToday = uniqueDates.includes(todayStr);
   const hasYesterday = uniqueDates.includes(yesterdayStr);
 
   let currentStreak = 0;
   if (hasToday || hasYesterday) {
-    const checkDate = hasToday ? today : yesterday;
+    let currentCheckStr = hasToday ? todayStr : yesterdayStr;
     while (true) {
-      const checkStr = checkDate.toISOString().split('T')[0];
-      if (uniqueDates.includes(checkStr)) {
+      if (uniqueDates.includes(currentCheckStr)) {
         currentStreak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        const d = new Date(currentCheckStr + "T12:00:00");
+        d.setDate(d.getDate() - 1);
+        currentCheckStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       } else {
         break;
       }
@@ -36,12 +36,12 @@ function getStreakStats(datesStr: string[]) {
   let prevDate: Date | null = null;
 
   for (const dateStr of sortedDatesStr) {
-    const currentDate = new Date(dateStr);
+    const currentDate = new Date(dateStr + "T12:00:00");
     if (!prevDate) {
       currentRun = 1;
     } else {
       const diffTime = Math.abs(currentDate.getTime() - prevDate.getTime());
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
       if (diffDays === 1) {
         currentRun++;
       } else if (diffDays > 1) {
@@ -62,6 +62,11 @@ export async function GET(request: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const url = new URL(request.url);
+    const todayParam = url.searchParams.get('today');
+    const fallbackToday = new Date();
+    const todayStr = todayParam || `${fallbackToday.getFullYear()}-${String(fallbackToday.getMonth() + 1).padStart(2, '0')}-${String(fallbackToday.getDate()).padStart(2, '0')}`;
 
     const habits = await prisma.habit.findMany({
       where: { 
@@ -84,8 +89,7 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    const todayStr = new Date().toISOString().split('T')[0];
-    const thirtyDaysAgo = new Date();
+    const thirtyDaysAgo = new Date(todayStr + "T12:00:00");
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     let completedTodayCount = 0;
@@ -99,22 +103,32 @@ export async function GET(request: NextRequest) {
       const isCompletedToday = completionDates.includes(todayStr);
       if (isCompletedToday) completedTodayCount++;
 
+      // Find true start date (in case they retroactively completed days before createdAt)
+      let startDateStr = new Date(habit.createdAt).toISOString().split('T')[0];
+      if (completionDates.length > 0) {
+        const earliest = [...completionDates].sort()[0];
+        if (earliest < startDateStr) startDateStr = earliest;
+      }
+      
+      // We will attach startDateStr to the habit object for the heatmap loop
+      (habit as any).trueStartDateStr = startDateStr;
+
       // Streak Stats
-      const { currentStreak, longestStreak } = getStreakStats(completionDates);
+      const { currentStreak, longestStreak } = getStreakStats(completionDates, todayStr);
       streaks.push(currentStreak);
 
-      // Completion Rate last 30 days
-      const completionsLast30 = habit.completions.filter(
-        (c) => new Date(c.date) >= thirtyDaysAgo
-      );
-      const daysActive = Math.min(
-        30,
-        Math.ceil(
-          (new Date().getTime() - new Date(habit.createdAt).getTime()) /
-            (1000 * 60 * 60 * 24)
-        ) || 1
-      );
-      const completionRate = Math.round((completionsLast30.length / daysActive) * 100);
+      // Completion Rate all-time
+      const createdDate = new Date(startDateStr + "T12:00:00");
+      createdDate.setHours(0,0,0,0);
+      const now = new Date(todayStr + "T12:00:00");
+      now.setHours(23,59,59,999);
+      
+      const daysActive = Math.max(1, Math.ceil(
+        (now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24)
+      ));
+      
+      // Cap at 100% just in case of any weird bounds, but with true start date it shouldn't exceed
+      const completionRate = Math.min(100, Math.round((habit.completions.length / daysActive) * 100));
 
       totalConsistencySum += completionRate;
 
@@ -141,17 +155,17 @@ export async function GET(request: NextRequest) {
 
     // Heatmap data last 90 days
     const heatmapData: { date: string; count: number; total: number; level: number }[] = [];
-    const tempDate = new Date();
+    const tempDate = new Date(todayStr + "T12:00:00");
     for (let i = 0; i < 90; i++) {
-      const dateStr = tempDate.toISOString().split('T')[0];
+      const dateStr = `${tempDate.getFullYear()}-${String(tempDate.getMonth() + 1).padStart(2, '0')}-${String(tempDate.getDate()).padStart(2, '0')}`;
 
       // Count completions for all habits on this day
       let dayCompletions = 0;
       let dayActiveHabits = 0;
 
       for (const habit of habits) {
-        // Only count habit if it was created on or before this day
-        if (new Date(habit.createdAt).toISOString().split('T')[0] <= dateStr) {
+        // Only count habit if it was active on or before this day based on true start date
+        if ((habit as any).trueStartDateStr <= dateStr) {
           dayActiveHabits++;
           if (habit.completions.some((c) => c.date === dateStr)) {
             dayCompletions++;

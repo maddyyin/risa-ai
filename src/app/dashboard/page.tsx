@@ -31,7 +31,7 @@ function getFormattedDate() {
 // Helper to generate the current week days (Monday - Sunday)
 function getWeekDays() {
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
   const currentDay = today.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
   
   // Find Monday
@@ -44,7 +44,7 @@ function getWeekDays() {
   for (let i = 0; i < 7; i++) {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
-    const dateStr = day.toISOString().split("T")[0];
+    const dateStr = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
     days.push({
       date: dateStr,
       dayName: dayNames[i],
@@ -61,22 +61,23 @@ function calculateStreak(completions: { date: string }[]) {
   if (dates.length === 0) return 0;
 
   const today = new Date();
-  const todayStr = today.toISOString().split("T")[0];
-  const yesterday = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const yesterday = new Date(today);
   yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
   const hasToday = dates.includes(todayStr);
   const hasYesterday = dates.includes(yesterdayStr);
 
   let streak = 0;
   if (hasToday || hasYesterday) {
-    const checkDate = hasToday ? today : yesterday;
+    let currentCheckStr = hasToday ? todayStr : yesterdayStr;
     while (true) {
-      const checkStr = checkDate.toISOString().split("T")[0];
-      if (dates.includes(checkStr)) {
+      if (dates.includes(currentCheckStr)) {
         streak++;
-        checkDate.setDate(checkDate.getDate() - 1);
+        const d = new Date(currentCheckStr + "T12:00:00");
+        d.setDate(d.getDate() - 1);
+        currentCheckStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       } else {
         break;
       }
@@ -86,7 +87,7 @@ function calculateStreak(completions: { date: string }[]) {
 }
 
 export default function DashboardPage() {
-  const { habits, stats, fetchStats, insights, fetchInsights } = useHabitStore();
+  const { habits, stats, fetchStats, insights, insightsLoading, fetchInsights } = useHabitStore();
   const [userName, setUserName] = useState("User");
 
   useEffect(() => {
@@ -141,7 +142,8 @@ export default function DashboardPage() {
   // Find the highest-priority incomplete habit for today
   const priorityHabit = useMemo(() => {
     if (habits.length === 0) return null;
-    const todayStr = new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     const incomplete = habits.filter(
       (h) => !h.completions.some((c) => c.date === todayStr)
@@ -358,7 +360,15 @@ export default function DashboardPage() {
               </div>
 
               <div className="flex-1 flex flex-col justify-center gap-2 overflow-hidden py-1">
-                {insights.length === 0 ? (
+                {insightsLoading ? (
+                  <div className="animate-pulse flex gap-4 p-4 card-surface bg-white/[0.02]">
+                    <div className="w-8 h-8 rounded-xl bg-white/[0.05] shrink-0" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-3 bg-white/[0.05] rounded w-2/3" />
+                      <div className="h-3 bg-white/[0.05] rounded w-1/2" />
+                    </div>
+                  </div>
+                ) : insights.length === 0 ? (
                   <p className="text-white/30 text-xs text-center">
                     AI coaching insights will appear as you check off habits.
                   </p>

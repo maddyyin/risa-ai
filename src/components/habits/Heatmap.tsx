@@ -21,7 +21,7 @@ export function Heatmap({ data = [], days = 90 }: HeatmapProps) {
     let currentWeek: (HeatmapDay | null)[] = Array(7).fill(null);
 
     // Pad the beginning so the first day aligns with its day of week
-    const firstDate = new Date(sliced[0].date);
+    const firstDate = new Date(sliced[0].date + "T12:00:00");
     const startDayOfWeek = firstDate.getDay(); // 0 = Sunday, 6 = Saturday
 
     for (let i = 0; i < startDayOfWeek; i++) {
@@ -29,7 +29,7 @@ export function Heatmap({ data = [], days = 90 }: HeatmapProps) {
     }
 
     sliced.forEach((day) => {
-      const date = new Date(day.date);
+      const date = new Date(day.date + "T12:00:00");
       const dayOfWeek = date.getDay();
 
       currentWeek[dayOfWeek] = day;
@@ -58,7 +58,7 @@ export function Heatmap({ data = [], days = 90 }: HeatmapProps) {
       // Find the first valid day in the week
       const validDay = week.find((d) => d !== null);
       if (validDay) {
-        const date = new Date(validDay.date);
+        const date = new Date(validDay.date + "T12:00:00");
         const month = date.getMonth();
         if (month !== lastMonth) {
           const monthStr = date.toLocaleString("default", { month: "short" });
@@ -125,7 +125,7 @@ export function Heatmap({ data = [], days = 90 }: HeatmapProps) {
                   }
 
                   const levelClass = `heatmap-cell-${day.level}`;
-                  const title = `${new Date(day.date).toLocaleDateString(undefined, {
+                  const title = `${new Date(day.date + "T12:00:00").toLocaleDateString(undefined, {
                     weekday: "short",
                     month: "short",
                     day: "numeric",

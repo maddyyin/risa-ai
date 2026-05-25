@@ -13,10 +13,11 @@ export function StoreInitializer() {
   useEffect(() => {
     if (!user) return; // Only run data fetching and background polling if user is authenticated
 
-    const today = new Date().toISOString().split("T")[0];
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     fetchHabits();
     fetchStats();
-    fetchDailyTasks(today);
+    fetchDailyTasks(todayStr);
 
     // Soft polling every 30 seconds
     const interval = setInterval(() => {

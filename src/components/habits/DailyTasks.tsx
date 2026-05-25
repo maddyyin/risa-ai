@@ -21,7 +21,8 @@ export function DailyTasks() {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim()) return;
-    const today = new Date().toISOString().split("T")[0];
+    const todayObj = new Date();
+    const today = `${todayObj.getFullYear()}-${String(todayObj.getMonth() + 1).padStart(2, '0')}-${String(todayObj.getDate()).padStart(2, '0')}`;
     await addDailyTask(newTitle.trim(), today);
     setNewTitle("");
   };

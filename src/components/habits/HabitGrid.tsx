@@ -8,18 +8,7 @@ import { CategoryFilter } from "./CategoryFilter";
 
 export function HabitGrid() {
   const { habits, toggleCompletion } = useHabitStore();
-  const [isMobile, setIsMobile] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-
-  // Check window width for responsive sizing
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
 
   // Filter habits by category
   const filteredHabits = useMemo(() => {
@@ -30,15 +19,14 @@ export function HabitGrid() {
   // Compute days of current month
   const days = useMemo(() => {
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
     const year = today.getFullYear();
     const month = today.getMonth(); // 0 = Jan, 11 = Dec
     const numDays = new Date(year, month + 1, 0).getDate();
 
     const result = [];
     for (let i = 1; i <= numDays; i++) {
-      const date = new Date(year, month, i);
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
 
       result.push({
         date: dateStr,
@@ -48,15 +36,16 @@ export function HabitGrid() {
       });
     }
 
-    if (isMobile) {
-      // For mobile, only show last 7 days up to today
-      const todayIndex = result.findIndex((d) => d.isToday);
-      const startIndex = Math.max(0, todayIndex - 6);
-      return result.slice(startIndex, todayIndex + 1);
-    }
+    // Determine the index of today to calculate recent days
+    const todayIndex = result.findIndex(d => d.isToday);
+    // If today is not in the current month (edge case), default to end of array
+    const baseIndex = todayIndex >= 0 ? todayIndex : result.length - 1;
 
-    return result;
-  }, [isMobile]);
+    return result.map((d, index) => ({
+      ...d,
+      isRecent: index >= baseIndex - 6 && index <= baseIndex
+    }));
+  }, []);
 
   if (habits.length === 0) {
     return (
@@ -102,7 +91,7 @@ export function HabitGrid() {
                       {days.map((day) => (
                         <span
                           key={day.date}
-                          className={`w-[28px] text-center inline-block ${
+                          className={`w-[28px] text-center ${day.isRecent ? "inline-block" : "hidden md:inline-block"} ${
                             day.isToday ? "text-purple-400 font-extrabold" : ""
                           }`}
                         >

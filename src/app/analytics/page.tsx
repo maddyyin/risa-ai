@@ -4,8 +4,9 @@ import { useEffect, useMemo } from "react";
 import { useHabitStore } from "@/store/habitStore";
 import { Header } from "@/components/layout/Header";
 import { Heatmap } from "@/components/habits/Heatmap";
+import { ProductivityChart } from "@/components/analytics/ProductivityChart";
 import { InsightCard } from "@/components/ai/InsightCard";
-import { BarChart2, AlertCircle } from "lucide-react";
+import { BarChart2, AlertCircle, TrendingUp } from "lucide-react";
 
 export default function AnalyticsPage() {
   const { stats, fetchStats, insights, fetchInsights } = useHabitStore();
@@ -88,17 +89,25 @@ export default function AnalyticsPage() {
           </div>
         </section>
 
-        {/* SECTION 2: Consistency Heatmap */}
-        <section className="card-surface p-5">
-          <div className="border-b border-white/[0.06] pb-3 mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="font-display font-bold text-sm text-white">Consistency Heatmap</h2>
-              <p className="text-[10px] text-white/30 mt-0.5">completions across all habits for the last 90 days</p>
+        {/* SECTION 2: Consistency Heatmap & Productivity Graph */}
+        <div className="grid lg:grid-cols-2 gap-6 items-stretch">
+          <section className="card-surface p-5 flex flex-col">
+            <div className="border-b border-white/[0.06] pb-3 mb-4 flex items-center justify-between shrink-0">
+              <div>
+                <h2 className="font-display font-bold text-sm text-white">Consistency Heatmap</h2>
+                <p className="text-[10px] text-white/30 mt-0.5">completions across all habits for the last 90 days</p>
+              </div>
+              <span className="text-[10px] text-white/30 font-semibold uppercase tracking-wider">last 90 days</span>
             </div>
-            <span className="text-[10px] text-white/30 font-semibold uppercase tracking-wider">last 90 days</span>
-          </div>
-          <Heatmap data={stats.heatmapData} />
-        </section>
+            <div className="flex-1 flex items-center justify-center">
+              <Heatmap data={stats.heatmapData} />
+            </div>
+          </section>
+
+          <section className="card-surface p-5 flex flex-col justify-center">
+            <ProductivityChart data={stats.heatmapData} days={30} />
+          </section>
+        </div>
 
         {/* SECTION 3: Breakdown & Routine Details */}
         <div className="grid lg:grid-cols-5 gap-6">

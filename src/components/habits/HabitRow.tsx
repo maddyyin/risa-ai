@@ -9,7 +9,7 @@ import { DeleteConfirmDialog } from "@/components/ui/DeleteConfirmDialog";
 
 interface HabitRowProps {
   habit: Habit;
-  days: { date: string; isToday: boolean; isFuture: boolean }[];
+  days: { date: string; isToday: boolean; isFuture: boolean; isRecent: boolean }[];
   onToggle: (habitId: string, date: string) => void;
 }
 
@@ -22,27 +22,30 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
     return habit.completions.map((c) => c.date);
   }, [habit.completions]);
 
-  // Calculate streak from completions
+  // Calculate streak from completions (timezone safe)
   const currentStreak = useMemo(() => {
     if (completionDates.length === 0) return 0;
 
     const today = new Date();
-    const todayStr = today.toISOString().split("T")[0];
-    const yesterday = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split("T")[0];
+    const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
 
     const hasToday = completionDates.includes(todayStr);
     const hasYesterday = completionDates.includes(yesterdayStr);
 
     let streak = 0;
     if (hasToday || hasYesterday) {
-      const checkDate = hasToday ? new Date(today) : new Date(yesterday);
+      let currentCheckStr = hasToday ? todayStr : yesterdayStr;
+      
       while (true) {
-        const checkStr = checkDate.toISOString().split("T")[0];
-        if (completionDates.includes(checkStr)) {
+        if (completionDates.includes(currentCheckStr)) {
           streak++;
-          checkDate.setDate(checkDate.getDate() - 1);
+          // go back one day safely
+          const d = new Date(currentCheckStr + "T12:00:00");
+          d.setDate(d.getDate() - 1);
+          currentCheckStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         } else {
           break;
         }
@@ -53,26 +56,45 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
 
   // Calculate completion percentage
   const completionPercent = useMemo(() => {
-    const elapsedDays = days.filter((d) => !d.isFuture);
-    if (elapsedDays.length === 0) return 0;
+    let createdDateStr = new Date(habit.createdAt).toISOString().split('T')[0];
+    if (completionDates.length > 0) {
+      const earliest = [...completionDates].sort()[0];
+      if (earliest < createdDateStr) createdDateStr = earliest;
+    }
 
-    const completionsInDays = elapsedDays.filter((d) =>
+    const activeDays = days.filter((d) => !d.isFuture && d.date >= createdDateStr);
+    if (activeDays.length === 0) return 0;
+
+    const completionsInDays = activeDays.filter((d) =>
       completionDates.includes(d.date)
     ).length;
 
-    return Math.round((completionsInDays / elapsedDays.length) * 100);
-  }, [days, completionDates]);
+    return Math.round((completionsInDays / activeDays.length) * 100);
+  }, [days, completionDates, habit.createdAt]);
+
+  const isPerfectMonth = completionPercent === 100 && days.filter(d => !d.isFuture).length > 0;
+  const pulseStrength = Math.min(currentStreak * 2, 15);
 
   return (
     <>
-      <tr className="border-b border-white/[0.04] last:border-0 hover:bg-white/[0.01] transition-colors group">
+      <tr className={`border-b border-white/[0.04] last:border-0 hover:bg-white/[0.01] transition-colors group relative ${isPerfectMonth ? 'shadow-[inset_0_0_15px_rgba(168,85,247,0.15)] bg-purple-500/[0.02]' : ''}`}>
         {/* Habit Info */}
         <td className="py-3.5 pl-4 pr-3 min-w-[140px] max-w-[180px]">
           <div className="flex items-center gap-2">
-            <span className="text-base select-none">{habit.icon}</span>
-            <span className="text-xs font-semibold text-white/90 truncate" title={habit.name}>
-              {habit.name}
+            <span 
+              className="text-base select-none transition-all duration-500"
+              style={currentStreak > 2 ? { filter: `drop-shadow(0 0 ${pulseStrength}px rgba(168,85,247,0.6))` } : undefined}
+            >
+              {habit.icon}
             </span>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-semibold text-white/90 truncate flex items-center gap-1.5" title={habit.name}>
+                {habit.name}
+                {isPerfectMonth && (
+                  <span title="Perfect Month!" className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400 animate-pulse" />
+                )}
+              </span>
+            </div>
             {/* Action buttons - visible on hover (desktop) or always on touch */}
             <div className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 md:transition-opacity shrink-0 max-md:opacity-100">
               <button
@@ -114,7 +136,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
                   disabled={isFuture}
                   onClick={() => onToggle(habit.id, day.date)}
                   title={`${habit.name} - ${day.date}${day.isToday ? " (Today)" : ""}`}
-                  className={`${cellClass} shrink-0 relative`}
+                  className={`${cellClass} shrink-0 relative ${day.isRecent ? "flex" : "hidden md:flex"}`}
                 >
                   {isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
                   {day.isToday && !isCompleted && (
