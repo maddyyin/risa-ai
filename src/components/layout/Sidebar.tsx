@@ -2,15 +2,16 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Target, BarChart3, Settings, LogOut, X } from "lucide-react";
-import { useHabitStore } from "@/store/habitStore";
+import { LayoutDashboard, Target, BarChart3, Settings, X, User, Plus, HelpCircle, Brain } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { CreateHabitDialog } from "../habits/CreateHabitDialog";
 
 const navLinks = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/habits", label: "Habits", icon: Target },
+  { href: "/intelligence", label: "Intelligence", icon: Brain },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/settings", label: "Profile", icon: User },
 ];
 
 interface SidebarProps {
@@ -20,92 +21,97 @@ interface SidebarProps {
 
 export function Sidebar({ isMobile = false, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const stats = useHabitStore((s) => s.stats);
-  const { user, logOut } = useAuth();
-
-  const displayName = user?.email?.split("@")[0] || "User";
-  const firstLetter = (user?.email?.[0] || "U").toUpperCase();
+  const { user } = useAuth();
 
   const containerClass = isMobile
-    ? "flex flex-col w-full h-full bg-[#0a0a0f] relative z-20"
-    : "hidden lg:flex flex-col w-60 border-r border-white/[0.06] bg-[#0a0a0f] relative z-20 shrink-0";
+    ? "flex flex-col w-full h-full bg-[#050811] relative z-20"
+    : "hidden lg:flex flex-col w-60 border-r border-white/[0.04] bg-[#050811] relative z-20 shrink-0";
 
   return (
     <aside className={containerClass}>
-      {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/[0.06] flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2" onClick={onClose}>
-          <span className="font-display font-bold text-xl tracking-tight text-white">
+      {/* Logo Section */}
+      <div className="px-6 pt-8 pb-6 flex flex-col justify-start">
+        <Link href="/" className="flex items-center justify-between gap-2" onClick={onClose}>
+          <span className="font-display font-black text-3xl tracking-tight text-white uppercase">
             RISA
           </span>
+          {isMobile && onClose && (
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/50 hover:text-white/80 transition-colors"
+              aria-label="Close navigation"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </Link>
-        {isMobile && onClose && (
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-lg hover:bg-white/[0.06] text-white/50 hover:text-white/80 transition-colors"
-            aria-label="Close navigation"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        )}
+        <p className="text-white/30 text-[10px] font-semibold tracking-wider uppercase mt-1">
+          Habit Intelligence
+        </p>
       </div>
-      <p className="text-white/30 text-xs px-6 pt-1 pb-2">habit intelligence</p>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Main Nav */}
+      <nav className="px-3 py-4 space-y-1.5">
         {navLinks.map((link) => {
           const isActive =
-            pathname === link.href || pathname.startsWith(link.href + "/");
+            pathname === link.href || (link.href !== "#" && pathname.startsWith(link.href + "/"));
           const Icon = link.icon;
           return (
             <Link
-              key={link.href}
+              key={link.label}
               href={link.href}
               onClick={onClose}
-              className={`sidebar-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm ${
+              className={`sidebar-link flex items-center gap-3 px-4 py-3 rounded-full text-sm font-medium transition-all ${
                 isActive
-                  ? "active text-white font-medium"
-                  : "text-white/50 hover:text-white/80"
+                  ? "bg-[#00f5ff] text-[#050811] shadow-[0_0_16px_rgba(0,245,255,0.3)] font-semibold"
+                  : "text-white/50 hover:text-white/80 hover:bg-white/[0.03]"
               }`}
             >
               <Icon
                 className={`w-[18px] h-[18px] ${
-                  isActive ? "text-purple-400" : ""
+                  isActive ? "text-[#050811]" : "text-white/40"
                 }`}
               />
               <span>{link.label}</span>
-              {link.href === "/habits" && stats && stats.consistencyScore > 0 && (
-                <span className="ml-auto text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-500/15 text-purple-400">
-                  {stats.consistencyScore}%
-                </span>
-              )}
             </Link>
           );
         })}
       </nav>
 
-      {/* Bottom */}
-      <div className="px-4 py-4 border-t border-white/[0.06] flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center text-xs font-semibold text-purple-300 shrink-0">
-            {firstLetter}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white/80 truncate capitalize">
-              {displayName}
-            </p>
-            <p className="text-white/30 text-[10px] truncate">
-              {user?.email}
-            </p>
-          </div>
+      {/* Bottom Section */}
+      <div className="px-4 py-6 mt-auto space-y-4 border-t border-white/[0.04]">
+        {/* Create Habit button */}
+        <CreateHabitDialog
+          trigger={
+            <button className="w-full bg-[#00f5ff] text-[#050811] hover:bg-[#00d8e2] font-bold text-sm py-3 rounded-full flex items-center justify-center gap-2 shadow-[0_0_16px_rgba(0,245,255,0.3)] transition-all cursor-pointer">
+              <Plus className="w-4 h-4 stroke-[3]" />
+              New Habit
+            </button>
+          }
+        />
+
+        {/* Support & Settings Links */}
+        <div className="space-y-1">
+          <Link
+            href="#"
+            className="sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-full text-sm text-white/50 hover:text-white/80 hover:bg-white/[0.03] transition-all"
+          >
+            <HelpCircle className="w-[18px] h-[18px] text-white/40" />
+            <span>Support</span>
+          </Link>
+          <Link
+            href="/settings"
+            onClick={onClose}
+            className={`sidebar-link flex items-center gap-3 px-4 py-2.5 rounded-full text-sm transition-all ${
+              pathname === "/settings"
+                ? "bg-[#00f5ff] text-[#050811] shadow-[0_0_16px_rgba(0,245,255,0.3)] font-semibold"
+                : "text-white/50 hover:text-white/80 hover:bg-white/[0.03]"
+            }`}
+          >
+            <Settings className="w-[18px] h-[18px] text-white/40" />
+            <span>Settings</span>
+          </Link>
         </div>
-        <button
-          onClick={logOut}
-          title="Sign Out"
-          className="p-1.5 rounded-md hover:bg-white/[0.04] text-white/40 hover:text-white/80 transition-colors cursor-pointer shrink-0"
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
       </div>
     </aside>
   );

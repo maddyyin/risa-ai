@@ -23,7 +23,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className="min-h-full flex flex-col bg-[#0a0a0f] text-white"
+        className="min-h-full flex flex-col bg-[#050811] text-white"
         style={{ fontFamily: "'General Sans', sans-serif" }}
       >
         <AuthProvider>

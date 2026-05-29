@@ -58,10 +58,10 @@ export function AIChat() {
   return (
     <div className="card-surface p-4 flex flex-col h-[380px]">
       <div className="flex items-center gap-2 border-b border-white/[0.06] pb-3 mb-3 shrink-0">
-        <Sparkles className="w-4 h-4 text-purple-400" />
+        <Sparkles className="w-4 h-4 text-blue-400" />
         <span className="font-display font-semibold text-sm text-white">Ask RISA</span>
         <span className="text-[10px] text-white/30 ml-auto flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-pulse" />
+          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
           coach is online
         </span>
       </div>
@@ -82,7 +82,7 @@ export function AIChat() {
             >
               <div
                 className={`max-w-[85%] px-3.5 py-2.5 text-sm leading-relaxed ${
-                  msg.role === "user" ? "chat-user text-purple-200" : "chat-ai text-white/90"
+                  msg.role === "user" ? "chat-user text-blue-200" : "chat-ai text-white/90"
                 }`}
               >
                 {msg.content}
@@ -126,7 +126,7 @@ export function AIChat() {
           onChange={(e) => setInput(e.target.value)}
           placeholder={placeholders[placeholderIdx]}
           disabled={chatLoading}
-          className="input-minimal flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-purple-500/40 bg-white/[0.03] border-white/[0.08] transition-all"
+          className="input-minimal flex-1 px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500/40 bg-white/[0.03] border-white/[0.08] transition-all"
         />
         <button
           type="submit"

@@ -77,13 +77,13 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
 
   return (
     <>
-      <tr className={`border-b border-white/[0.04] last:border-0 hover:bg-white/[0.01] transition-colors group relative ${isPerfectMonth ? 'shadow-[inset_0_0_15px_rgba(168,85,247,0.15)] bg-purple-500/[0.02]' : ''}`}>
+      <tr className={`border-b border-white/[0.04] last:border-0 hover:bg-white/[0.01] transition-colors group relative ${isPerfectMonth ? 'shadow-[inset_0_0_15px_rgba(59,130,246,0.15)] bg-blue-500/[0.02]' : ''}`}>
         {/* Habit Info */}
-        <td className="py-3.5 pl-4 pr-2 min-w-[150px] max-w-[180px] sticky left-0 bg-[#111118] group-hover:bg-[#15151e] z-10 shadow-[4px_0_12px_rgba(0,0,0,0.4)]">
+        <td className="py-3.5 pl-4 pr-2 min-w-[150px] max-w-[180px] sticky left-0 bg-[#0b0f19] group-hover:bg-[#151c2c] z-10 shadow-[4px_0_12px_rgba(0,0,0,0.4)]">
           <div className="flex items-center gap-2">
             <span 
               className="text-base select-none transition-all duration-500"
-              style={currentStreak > 2 ? { filter: `drop-shadow(0 0 ${pulseStrength}px rgba(168,85,247,0.6))` } : undefined}
+              style={currentStreak > 2 ? { filter: `drop-shadow(0 0 ${pulseStrength}px rgba(59,130,246,0.6))` } : undefined}
             >
               {habit.icon}
             </span>
@@ -91,7 +91,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
               <span className="text-xs font-semibold text-white/90 truncate flex items-center gap-1.5" title={habit.name}>
                 {habit.name}
                 {isPerfectMonth && (
-                  <span title="Perfect Month!" className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400 animate-pulse" />
+                  <span title="Perfect Month!" className="flex h-1.5 w-1.5 shrink-0 rounded-full bg-blue-400 animate-pulse" />
                 )}
               </span>
             </div>
@@ -99,7 +99,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
             <div className="flex items-center gap-0.5 ml-1 opacity-0 group-hover:opacity-100 md:transition-opacity shrink-0 max-md:opacity-100">
               <button
                 onClick={() => setEditOpen(true)}
-                className="p-1 rounded text-white/30 hover:text-purple-400 hover:bg-purple-500/10 transition-all"
+                className="p-1 rounded text-white/30 hover:text-blue-400 hover:bg-blue-500/10 transition-all"
                 title="Edit habit"
               >
                 <Pencil className="w-3 h-3" />
@@ -125,7 +125,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
               let cellClass = "habit-cell";
               if (isCompleted) cellClass += " habit-cell-done text-white";
               if (isFuture) cellClass += " habit-cell-disabled";
-              if (day.isToday && !isCompleted) cellClass += " border-purple-500/40 ring-1 ring-purple-500/20";
+              if (day.isToday && !isCompleted) cellClass += " border-blue-500/40 ring-1 ring-blue-500/20";
 
               return (
                 <button
@@ -137,7 +137,7 @@ export function HabitRow({ habit, days, onToggle }: HabitRowProps) {
                 >
                   {isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
                   {day.isToday && !isCompleted && (
-                    <span className="absolute bottom-0.5 right-0.5 w-1 h-1 bg-purple-500 rounded-full" />
+                    <span className="absolute bottom-0.5 right-0.5 w-1 h-1 bg-blue-500 rounded-full" />
                   )}
                 </button>
               );

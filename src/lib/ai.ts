@@ -80,7 +80,7 @@ function getFallbackResponse(type: 'chat' | 'insights', isJson: boolean): string
     const insightsFallback = {
       insights: [
         {
-          type: 'tip',
+          type: 'motivation',
           message: 'Establish a fixed, quiet time block for your most challenging habits to reduce friction.',
         },
         {

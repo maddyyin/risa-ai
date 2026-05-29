@@ -10,14 +10,14 @@ export default function LandingPage() {
   return (
     <main className="flex-1 flex flex-col items-center justify-center min-h-[80vh] px-6 text-center select-none">
       <div className="max-w-xl space-y-6 animate-fade-in-up">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold">
           <span>RISA</span>
         </div>
 
         {/* Hero title */}
         <h1 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl tracking-tight text-white leading-[1.1]">
           Build{" "}
-          <span className="bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
+          <span className="bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text text-transparent">
             consistency.
           </span>
         </h1>

@@ -68,6 +68,7 @@ interface HabitState {
   fetchInsights: () => Promise<void>;
   sendChatMessage: (message: string) => Promise<void>;
   fetchChatHistory: () => Promise<void>;
+  clearChatHistory: () => Promise<void>;
 }
 
 export const useHabitStore = create<HabitState>((set, get) => ({
@@ -423,6 +424,20 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       set({ chatMessages: messages });
     } catch (e) {
       console.warn('Chat history fetch failed:', e);
+    }
+  },
+
+  clearChatHistory: async () => {
+    try {
+      const authHeaders = await getAuthHeaders();
+      const res = await fetch('/api/ai/chat', {
+        method: 'DELETE',
+        headers: authHeaders,
+      });
+      if (!res.ok) throw new Error('Failed to clear chat');
+      set({ chatMessages: [] });
+    } catch (e) {
+      console.error('Clear chat history failed:', e);
     }
   },
 }));

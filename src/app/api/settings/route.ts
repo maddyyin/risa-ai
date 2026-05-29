@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       name: userRecord.name,
+      email: userRecord.email,
       motivationTone: userRecord.motivationTone,
       aggressiveness: userRecord.aggressiveness,
       focusStart: userRecord.focusStart,
@@ -38,12 +39,13 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, motivationTone, aggressiveness, focusStart, focusEnd } = body;
+    const { name, email, motivationTone, aggressiveness, focusStart, focusEnd } = body;
 
     const userRecord = await prisma.user.update({
       where: { id: user.id },
       data: {
         name: name || undefined,
+        email: email || undefined,
         motivationTone: motivationTone || undefined,
         aggressiveness: aggressiveness || undefined,
         focusStart: focusStart || undefined,
@@ -53,6 +55,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       name: userRecord.name,
+      email: userRecord.email,
       motivationTone: userRecord.motivationTone,
       aggressiveness: userRecord.aggressiveness,
       focusStart: userRecord.focusStart,

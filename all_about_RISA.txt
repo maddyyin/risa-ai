@@ -1,0 +1,370 @@
+================================================================================
+                                 R I S A
+                        HABIT INTELLIGENCE SYSTEM
+                      COMPREHENSIVE TECHNICAL MANUAL
+================================================================================
+
+RISA is a calm, emotionally intelligent, premium, and minimal habit tracking and 
+behavioral analytics application. It quietly monitors and analyzes behavioral 
+patterns to help users build stable, lifelong habits and routines.
+
+This document describes the complete architecture, database schema, state management 
+flow, page layouts, API endpoints, and every individual UI component in detail.
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+1. CORE FUNCTIONALITIES & CONCEPTUAL DESIGN
+2. ARCHITECTURAL OVERVIEW & TECHNOLOGY STACK
+3. DATABASE SCHEMA (PRISMA & POSTGRESQL)
+4. CLIENT STATE MANAGEMENT & SOFT POLLING (ZUSTAND)
+5. ROUTING & SYSTEM NAVIGATION
+6. DYNAMIC BEHAVIORAL ANALYTICS & GRAPHICS
+7. AI COACHING ENGINE & CUSTOM BEHAVIORAL ADJUSTMENTS
+8. PAGE-BY-PAGE UI LAYOUTS & USER FLOWS
+9. UI COMPONENTS DIRECTORY & DETAILED CATALOG
+
+
+================================================================================
+1. CORE FUNCTIONALITIES & CONCEPTUAL DESIGN
+================================================================================
+
+RISA is designed with the philosophy of "quiet guidance". Instead of bombarding the
+user with intrusive reminders and aggressive game mechanics, it acts as an 
+emotionally intelligent, calming mentor.
+
+Key Functionalities:
+-------------------
+* Habits Tracking Matrix: Users track their habits on a daily basis. The system 
+  supports multiple frequencies (daily, weekdays, and custom days) and priority 
+  levels (low, medium, high) to customize routines.
+* Habit Completions & Streaks: Users check off habits per calendar day. Streaks 
+  are computed on-the-fly in a timezone-safe manner based on consecutive completed 
+  days.
+* Ephemeral Daily Tasks: Separate from habits, users maintain an inline daily checklist 
+  of simple tasks (to-dos) that do not persist as long-term metrics, reducing cognitive 
+  load.
+* AI Behavioral Reflection & Insights: A backend LLM (via Groq API or local fallback) 
+  analyzes the user's last 30 days of completions to output customized advice, 
+  behavioral observations, tips, warnings, and weekly reflections.
+* Customizable Coach Behaviors: Users configure RISA's personality, tailoring the 
+  AI's motivation tone (Supportive, Neutral, Direct) and aggressiveness levels (Low, 
+  Balanced, High).
+* Habit Classification & Categorization: Habits are organized into color-coded 
+  categories (General, Study, Coding, Meditation, Finance, etc.). Users can manage, 
+  edit, delete, or create their own custom categories.
+* Interactive AI Coach Chat: An interactive chat client where users can ask RISA 
+  questions about their habits, procrastinative habits, or improvement strategies.
+
+
+================================================================================
+2. ARCHITECTURAL OVERVIEW & TECHNOLOGY STACK
+================================================================================
+
+RISA is a modern web application built on the following technologies:
+* Framework: Next.js (utilizing the App Router with Route Handlers for APIs).
+* Frontend Logic: React 19, TypeScript, and Lucide React (for premium iconography).
+* Styling & Theme: Tailwind CSS with customized colors, high-end dark surface gradients 
+  (under a #0b0f19/dark-blue palette), subtle animation fades, and transparent backdrops.
+* Database Layer: PostgreSQL queried via Prisma ORM.
+* Authentication: Client and server auth handled via Firebase Authentication.
+* Client State & Hydration: Zustand state management with optimistic UI updates.
+* AI Orchestration: Groq API client with a fallback local insight generator.
+
+
+================================================================================
+3. DATABASE SCHEMA (PRISMA & POSTGRESQL)
+================================================================================
+
+The database consists of 5 main models defined in `prisma/schema.prisma`:
+
+1. User
+   - id: String (Primary Key; maps to the Firebase UID)
+   - email: String (Unique)
+   - name: String (Default: "User")
+   - motivationTone: String (Default: "supportive")
+   - aggressiveness: String (Default: "balanced")
+   - focusStart: String (Default: "09:00")
+   - focusEnd: String (Default: "18:00")
+   - createdAt: DateTime
+   - Relations: Has many Habits, DailyTasks, and AIConversations
+
+2. Habit
+   - id: String (Primary Key; UUID)
+   - userId: String (Foreign Key linking to User)
+   - name: String
+   - icon: String (Emoji representation; Default: "📌")
+   - color: String (HEX format; Default: "#8b5cf6")
+   - frequency: String (Default: "daily"; choices: "daily" | "weekdays" | "custom")
+   - targetDays: String (Optional; JSON string describing target days [0-6] for custom)
+   - category: String (Default: "General")
+   - priority: String (Default: "medium"; choices: "low" | "medium" | "high")
+   - archived: Boolean (Default: false)
+   - sortOrder: Int (Default: 0)
+   - reminderTime: String (Optional; "HH:MM")
+   - createdAt: DateTime
+   - Relations: Has many Completions
+
+3. HabitCompletion
+   - id: String (Primary Key; UUID)
+   - habitId: String (Foreign Key linking to Habit)
+   - date: String ("YYYY-MM-DD")
+   - completed: Boolean (Default: true)
+   - note: String (Optional)
+   - Unique: Compound index on [habitId, date] prevents duplicate entries per day.
+
+4. DailyTask
+   - id: String (Primary Key; UUID)
+   - userId: String (Foreign Key linking to User)
+   - title: String
+   - completed: Boolean (Default: false)
+   - date: String ("YYYY-MM-DD")
+   - sortOrder: Int (Default: 0)
+   - createdAt: DateTime
+
+5. AIConversation
+   - id: String (Primary Key; UUID)
+   - userId: String (Foreign Key linking to User)
+   - role: String ("user" | "assistant")
+   - content: String
+   - createdAt: DateTime
+
+
+================================================================================
+4. CLIENT STATE MANAGEMENT & SOFT POLLING (ZUSTAND)
+================================================================================
+
+The application state resides in a unified Zustand store (`src/store/habitStore.ts`). 
+It handles:
+* Category Persistence: Preset categories are combined with custom categories that 
+  are saved and loaded from the browser's local storage (`risa_custom_categories`).
+* Habits Management: Methods for fetching, creating, updating, deleting, and toggling 
+  completions.
+* Optimistic UI Updates: Toggles and operations immediately update the client state, 
+  then trigger async API calls to prevent UI lag.
+* Stats Syncing: Fetches calculated metrics from the server `/api/habits/stats` 
+  whenever modifications occur.
+* Daily Tasks Management: Handlers for fetching, adding, toggling, editing, and 
+  deleting daily items.
+* AI Integrations: Methods for loading insights and handling chat conversation.
+* Store Hydration: Managed by `StoreInitializer.tsx`. When a user authenticates, 
+  it runs initial queries and schedules a background soft poll every 30 seconds to 
+  refresh habits and statistics from the server.
+
+
+================================================================================
+5. ROUTING & SYSTEM NAVIGATION
+================================================================================
+
+The application operates on five main paths under `/src/app`:
+1. `/` (Landing Page): Displays the hero header, subtitle, and a "Get Started" call-to-action 
+   directing to the dashboard (if logged in) or sign-in (if anonymous).
+2. `/signin`: A premium authentication screen for user log in.
+3. `/signup`: Registration interface for new users.
+4. `/dashboard`: The command center. Displays quick stats, weekly heatmaps, today's 
+   priority habit, and current coach advice.
+5. `/habits`: The core workplace. Features the Category manager, Create Habit modal, 
+   the Month Tracker grid, Daily Tasks, and the interactive AI Coach chat box.
+6. `/analytics`: Full behavioral breakdown containing the 90-day interactive completion 
+   heatmap, 30-day productivity chart, overall stats, highlights, and insights.
+7. `/settings`: Prefs editor. Users name, AI aggressiveness, tone, and focus hours.
+
+Routing checks are handled in `AppLayout.tsx`:
+- Unauthenticated users trying to access `/dashboard`, `/habits`, `/analytics`, or 
+  `/settings` are automatically redirected to `/signin`.
+- Authenticated users attempting to view `/`, `/signin`, or `/signup` are redirected 
+  to `/dashboard`.
+
+
+================================================================================
+6. DYNAMIC BEHAVIORAL ANALYTICS & GRAPHICS
+================================================================================
+
+Visual intelligence in RISA uses premium UI elements built using React and SVG:
+
+* Heatmap (90 Days): Displays a grid of squares grouped into columns by calendar week. 
+  Each cell represents a day. Color intensities (levels 0 to 4) represent the ratio of 
+  completed habits to total habits.
+  - Level 0: No habits completed.
+  - Level 1-4: Escalating shades of blue representing higher completion rates.
+  - Hovering over a block displays a tooltip with the date and completion details.
+
+* Productivity Trend Chart: A custom SVG rendering a 30-day productivity line.
+  - Draws a smooth line linking daily completion totals.
+  - Features a glowing drop-shadow path and a blue gradient fill area below the line.
+  - Displays grid lines and Y/X-axis label points dynamically scaled according to the 
+    user's maximum completion levels.
+
+* Consistency Breakdown: Horizontal progress bars showing each habit's individual 
+  completion rate over the tracked period.
+
+
+================================================================================
+7. AI COACHING ENGINE & CUSTOM BEHAVIORAL ADJUSTMENTS
+================================================================================
+
+The coaching engine combines database history, settings, and an LLM to deliver a 
+unique, personalized experience.
+
+API Workflow:
+------------
+1. Context Retrieval: The system gathers the user's display name, the list of active 
+   habits with their priority levels, completions over the last 30 days, recent chat 
+   history (last 10 messages), and behavioral settings (tone & aggressiveness).
+2. System Prompts: Prompt rules define RISA's personality. It must act as a calm, 
+   emotionally intelligent coach, speaking with minimal noise, short answers (2-3 sentences), 
+   and zero robotic prefixing.
+3. Behavioral Modifiers:
+   - Aggressiveness (Low, Balanced, High): Controls how direct or challenging the coach 
+     is regarding skipped habits.
+   - Motivation Tone (Supportive, Neutral, Direct): Sets the emotional perspective 
+     of the response.
+4. Groq Integration: Sends the structured context to the Groq API, forcing a JSON response 
+   structure.
+5. Local Fallback: If no API key is present (local run) or the API call fails, a local 
+   analyzing method generates insights (e.g. flagging a habit if its rate drops below 30% 
+   or praising it if it exceeds 80%) to maintain functional continuity.
+
+
+================================================================================
+8. PAGE-BY-PAGE UI LAYOUTS & USER FLOWS
+================================================================================
+
+Dashboard Page Layout:
+---------------------
+* Top: Header displaying a greeting (e.g. "Good Afternoon, Sahil") and context-aware 
+  subtitle showing weekly status.
+* Next: Stats Bar containing 4 cards (Consistency %, Overall Streak, Completed Today %, 
+  Focus Score).
+* Left Main: "This Week" box containing a compact weekly completion grid (Habits vs Days 
+  of the week) with weekly completion percentages.
+* Right Main: Stacked panel containing:
+  - "Priority Today": highlights the highest-priority incomplete habit for the day, 
+    complete with its current streak.
+  - "AI Guidance": Displays the primary behavioral reflection.
+
+Habits Page Layout:
+------------------
+* Top: Header containing "Categories" manager button and "Create Habit" button.
+* Top Sub: "AI Reflection & Guidance" displaying a 3-column list of active insights.
+* Center: "Consistency Tracker" showing the selected month's completion cells grid 
+  organized in a table layout, along with Category Filter chips.
+* Bottom Split:
+  - Left Panel: "Daily Tasks" ephemeral list.
+  - Right Panel: "Ask RISA" coach chat frame.
+
+Analytics Page Layout:
+---------------------
+* Top: Header with title.
+* Top Sub: "AI Behavioral Reflection" large banner block displaying the latest 30-day 
+  weekly reflection text inside a glowing, border-highlighted panel.
+* Center Split:
+  - Left Panel: Consistency Heatmap (90 days).
+  - Right Panel: 30-Day Productivity Trend Chart.
+* Bottom Split:
+  - Left (3 cols): "Consistency Breakdown" list of progress bars.
+  - Right (2 cols): Stacked boxes showing "Routine Highlights" (Most Skipped habit & Peak 
+    Consistency days) and "Actionable Insight" card.
+
+Settings Page Layout:
+--------------------
+* Container: Center-aligned minimal forms card.
+* Section A: Display Name configuration field.
+* Section B: AI Behavioral Adjustments (Aggressiveness: Low/Balanced/High, Tone: 
+  Supportive/Neutral/Direct).
+* Section C: Focus timeframes input dials (Start hour / End hour).
+* Bottom: "Save Preferences" button and "Sign Out Account" trigger.
+
+
+================================================================================
+9. UI COMPONENTS DIRECTORY & DETAILED CATALOG
+================================================================================
+
+This catalog describes all UI components located in `/src/components`:
+
+layout/
+------
+* AppLayout.tsx
+  - Role: The top-level application shell.
+  - Structure: Observes AuthContext. If loading, displays a spinning loader with a pulsing 
+    "RISA" logo. Manages a dark layout containing the desktop sidebar, an overlay backdrop for 
+    the mobile menu drawer, sticky mobile header, and embeds the page children and bottom navigation.
+* Header.tsx
+  - Role: Standardized page head.
+  - Structure: Displays a large title, subtitle, and an optional right-aligned child container 
+    for action buttons (e.g. "Create Habit"). Fully animated.
+* Sidebar.tsx
+  - Role: Desktop navigation sidebar.
+  - Structure: Rendered on large screens. Contains the logo, navigation links with active status 
+    highlights (displaying consistency stats beside "Habits"), user profile card, initials 
+    avatar, and log out icon.
+* MobileNav.tsx
+  - Role: Bottom navigation bar.
+  - Structure: Rendered on mobile displays. Houses layout icons with active indicators.
+
+ai/
+---
+* AIChat.tsx
+  - Role: Interactive coaching module.
+  - Structure: Displays chat messages, loading bubbles, auto-rotating input placeholders, 
+    predefined quick-suggestion chips, and an input form for messaging.
+* InsightCard.tsx
+  - Role: Beautiful feedback card for AI reflections.
+  - Structure: Parses the advice message, extracting a bold headline and secondary subtext. 
+    Decorated with specialized colors and glowing borders depending on the type 
+    (observation = blue, warning = amber, encouragement = emerald, tip = blue).
+
+habits/
+-------
+* CategoryFilter.tsx
+  - Role: Horizontal filter chips.
+  - Structure: Displays a list of categories to filter the tracker grid. Features active/inactive 
+    chip styling.
+* CategoryManagerDialog.tsx
+  - Role: Category editor popup.
+  - Structure: Includes a new category creator (name, emoji input, color palette dots) 
+    and list of categories. Custom ones can be renamed or deleted, while preset ones 
+    display a Lock symbol.
+* CreateHabitDialog.tsx
+  - Role: Dialog to construct new habits.
+  - Structure: Features text inputs, category selection chips, priority toggles, frequency 
+    selectors (with dynamic weekdays grids for custom days), and an optional time-reminder.
+* EditHabitDialog.tsx
+  - Role: Dialog to edit existing habits.
+  - Structure: Modifies name, icon, category, priority, frequency, and reminder times, or 
+    allows archiving the habit.
+* HabitGrid.tsx
+  - Role: Calendar layout for the tracker.
+  - Structure: Renders category chips, month-navigation headers, and a table containing 
+    HabitRows.
+* HabitRow.tsx
+  - Role: A single habit's track-record row.
+  - Structure: Houses the habit details, edit/delete hover controls, a row of daily completion 
+    checkbox cells, current streak flame badges, and completion rate progress bars.
+* DailyTasks.tsx
+  - Role: Daily task list checklist.
+  - Structure: Displays an input box to add tasks, inline editable tasks, deletion dialog triggers, 
+    and checkboxes that strike through completed tasks.
+* Heatmap.tsx
+  - Role: 90-day density matrix.
+  - Structure: Generates columns representing weeks, rows representing days, month labels, 
+    and a color key representing completion levels (0 to 4).
+
+ui/
+---
+* StatCard.tsx
+  - Role: Big numerical metric box.
+  - Structure: Displays a label, large numerical value (with suffixes like "%" or "days"), 
+    and a descriptive sublabel.
+* DeleteConfirmDialog.tsx
+  - Role: Destructive confirm modal.
+  - Structure: A prompt displaying warning text, a destructive confirmation trigger, and a cancel button.
+* button.tsx, card.tsx, dialog.tsx, input.tsx, label.tsx, select.tsx, textarea.tsx
+  - Role: Primitive form components with minimal styling.
+
+StoreInitializer.tsx
+--------------------
+* Role: Synchronizes application data state.
+* Structure: Mounted at the layout root. Observes auth state, fetches user data, and polls 
+  every 30 seconds.
+================================================================================

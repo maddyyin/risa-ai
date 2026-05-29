@@ -40,11 +40,11 @@ export default function SignInPage() {
   return (
     <div className="relative w-full max-w-sm">
       {/* Background ambient glow */}
-      <div className="absolute -inset-10 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute -inset-10 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
 
-      <div className="card-surface p-8 space-y-6 w-full rounded-2xl border border-white/[0.06] bg-[#0c0c14]/80 backdrop-blur-md shadow-2xl relative animate-fade-in">
+      <div className="card-surface p-8 space-y-6 w-full rounded-2xl border border-white/[0.06] bg-[#151c2c]/50 backdrop-blur-md shadow-2xl relative animate-fade-in">
         <div className="space-y-1.5 text-center">
-          <h1 className="font-display font-bold text-3xl tracking-tight bg-gradient-to-r from-white via-white to-purple-400 bg-clip-text text-transparent">
+          <h1 className="font-display font-bold text-3xl tracking-tight bg-gradient-to-r from-white via-white to-blue-400 bg-clip-text text-transparent">
             RISA
           </h1>
           <p className="text-white/40 text-[10px] uppercase tracking-widest font-medium">
@@ -74,7 +74,7 @@ export default function SignInPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@domain.com"
-                className="input-minimal w-full pl-10 pr-3 py-2 bg-white/[0.02] border-white/[0.06] text-sm focus:border-purple-500/50"
+                className="input-minimal w-full pl-10 pr-3 py-2 bg-white/[0.02] border-white/[0.06] text-sm focus:border-blue-500/50"
               />
             </div>
           </div>
@@ -95,7 +95,7 @@ export default function SignInPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••••••"
-                className="input-minimal w-full pl-10 pr-10 py-2 bg-white/[0.02] border-white/[0.06] text-sm focus:border-purple-500/50"
+                className="input-minimal w-full pl-10 pr-10 py-2 bg-white/[0.02] border-white/[0.06] text-sm focus:border-blue-500/50"
               />
               <button
                 type="button"
@@ -130,7 +130,7 @@ export default function SignInPage() {
         <div className="text-center border-t border-white/[0.04] pt-4">
           <p className="text-white/40 text-xs">
             New to RISA?{" "}
-            <Link href="/signup" className="text-purple-400 hover:text-purple-300 font-semibold transition-colors">
+            <Link href="/signup" className="text-blue-400 hover:text-blue-300 font-semibold transition-colors">
               Create an account
             </Link>
           </p>

@@ -87,7 +87,7 @@ Analyze patterns, check for drops on certain days, find correlations with priori
 Provide a JSON object strictly matching the schema:
 {
   "insights": [
-    { "type": "observation" | "warning" | "encouragement" | "tip", "message": "string", "habitName": "string" }
+    { "type": "warning" | "encouragement" | "motivation", "message": "string", "habitName": "string" }
   ],
   "weeklyReflection": "string",
   "focusScore": number
@@ -127,7 +127,7 @@ Insights messages should be quiet, encouraging, emotionally intelligent, support
       throw new Error('User context unavailable');
     } catch {
       const defaultInsights = {
-        insights: [{ type: 'tip', message: 'Focus on completing your most important habits first today.' }],
+        insights: [{ type: 'motivation', message: 'Focus on completing your most important habits first today.' }],
         weeklyReflection: 'Your journey to building consistency is starting. Keep moving forward.',
         focusScore: 50,
       };
@@ -187,7 +187,7 @@ function generateLocalInsights(habits: HabitWithCompletions[]) {
 
   if (insights.length === 0) {
     insights.push({
-      type: 'tip',
+      type: 'motivation',
       message: 'Establish a fixed time block for your most challenging habits to reduce resistance.',
     });
   }

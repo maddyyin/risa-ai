@@ -89,17 +89,17 @@ export function ProductivityChart({ data = [], days = 30 }: ProductivityChartPro
             })}
 
             {/* Area Fill */}
-            <path d={areaPath} fill="url(#purpleGradient)" opacity="0.4" />
+            <path d={areaPath} fill="url(#blueGradient)" opacity="0.4" />
 
             {/* Line Path */}
             <path
               d={linePath}
               fill="none"
-              stroke="rgb(168, 85, 247)"
+              stroke="rgb(59, 130, 246)"
               strokeWidth="3"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="drop-shadow-[0_0_8px_rgba(168,85,247,0.5)]"
+              className="drop-shadow-[0_0_8px_rgba(59,130,246,0.5)]"
             />
 
             {/* Data Points */}
@@ -109,8 +109,8 @@ export function ProductivityChart({ data = [], days = 30 }: ProductivityChartPro
                 cx={p.x}
                 cy={p.y}
                 r={p.count > 0 ? 4 : 3}
-                fill="#111118"
-                stroke={p.count > 0 ? "rgb(192, 132, 252)" : "rgba(255,255,255,0.2)"}
+                fill="#151c2c"
+                stroke={p.count > 0 ? "rgb(96, 165, 250)" : "rgba(255,255,255,0.2)"}
                 strokeWidth="2"
                 className="transition-all duration-200 hover:r-[6px] cursor-pointer"
               >
@@ -146,9 +146,9 @@ export function ProductivityChart({ data = [], days = 30 }: ProductivityChartPro
 
             {/* Gradients */}
             <defs>
-              <linearGradient id="purpleGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="rgb(168, 85, 247)" stopOpacity="0.8" />
-                <stop offset="100%" stopColor="rgb(168, 85, 247)" stopOpacity="0" />
+              <linearGradient id="blueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
               </linearGradient>
             </defs>
           </svg>

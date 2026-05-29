@@ -52,7 +52,7 @@ export default function AnalyticsPage() {
 
   if (!stats) {
     return (
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#050811] overflow-hidden">
         <Header title="Analytics" subtitle="behavioral patterns" />
         <main className="flex-1 p-6 lg:p-8 flex items-center justify-center">
           <div className="text-white/40 text-sm animate-pulse">Loading analytics...</div>
@@ -62,21 +62,21 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
+    <div className="flex-1 flex flex-col min-w-0 bg-[#050811] overflow-hidden">
       <Header title="Analytics" subtitle="behavioral patterns" />
 
-      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-5xl">
+      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-5xl mx-auto w-full overflow-y-auto">
         
         {/* HERO SECTION: AI Behavioral Reflection */}
-        <section className="card-surface p-6 border-l-[3px] border-l-purple-500/80 bg-gradient-to-r from-purple-950/10 via-[#111118] to-[#111118] relative overflow-hidden shadow-[0_4px_20px_-10px_rgba(139,92,246,0.15)] select-none">
+        <section className="card-surface p-6 border-l-[3px] border-l-blue-500/80 bg-gradient-to-r from-blue-950/10 via-[#151c2c80] to-[#151c2c80] relative overflow-hidden shadow-[0_4px_20px_-10px_rgba(59,130,246,0.15)] select-none">
           <div className="flex items-start gap-4">
-            <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 shrink-0 shadow-[0_0_12px_rgba(139,92,246,0.15)]">
+            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-400 shrink-0 shadow-[0_0_12px_rgba(59,130,246,0.15)]">
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364.364l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
               </svg>
             </div>
             <div className="space-y-1.5 flex-1">
-              <span className="text-[9px] font-black text-purple-400 uppercase tracking-widest">
+              <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">
                 AI Behavioral Reflection
               </span>
               <p className="text-white/90 text-sm sm:text-base leading-relaxed italic font-medium">
@@ -118,7 +118,7 @@ export default function AnalyticsPage() {
           {/* Consistency Breakdown (3 cols) */}
           <div className="lg:col-span-3 card-surface p-5 flex flex-col h-[320px]">
             <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-3 mb-3 shrink-0">
-              <BarChart2 className="w-4 h-4 text-purple-400" />
+              <BarChart2 className="w-4 h-4 text-blue-400" />
               <span className="font-display font-bold text-sm text-white">Consistency Breakdown</span>
             </div>
             
@@ -130,7 +130,7 @@ export default function AnalyticsPage() {
                   <div key={habit.habitId} className="space-y-1.5">
                     <div className="flex justify-between items-baseline text-xs">
                       <span className="font-semibold text-white/80">{habit.habitName}</span>
-                      <span className="font-bold text-purple-400">{habit.completionRate}%</span>
+                      <span className="font-bold text-blue-400">{habit.completionRate}%</span>
                     </div>
                     <div className="progress-thin w-full">
                       <div
@@ -149,7 +149,7 @@ export default function AnalyticsPage() {
             {/* Highlights Box */}
             <div className="card-surface p-4 flex flex-col justify-between flex-1">
               <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-2.5 shrink-0">
-                <AlertCircle className="w-3.5 h-3.5 text-purple-400" />
+                <AlertCircle className="w-3.5 h-3.5 text-blue-400" />
                 <span className="font-display font-bold text-xs text-white uppercase tracking-wider">Routine Highlights</span>
               </div>
 
@@ -174,7 +174,7 @@ export default function AnalyticsPage() {
             {/* Insights Stack */}
             <div className="card-surface p-4 flex flex-col justify-between flex-1 overflow-hidden">
               <div className="flex items-center gap-1.5 border-b border-white/[0.06] pb-2.5 shrink-0">
-                <svg className="w-3.5 h-3.5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <svg className="w-3.5 h-3.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
                 <span className="font-display font-bold text-xs text-white uppercase tracking-wider">Actionable Insight</span>

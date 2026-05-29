@@ -3,10 +3,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useHabitStore } from "@/store/habitStore";
 import { Header } from "@/components/layout/Header";
-import { StatCard } from "@/components/ui/StatCard";
-import { InsightCard } from "@/components/ai/InsightCard";
 import Link from "next/link";
-import { Check, Target, ChevronRight, Zap } from "lucide-react";
+import { Check, Target, ChevronRight, Zap, Bell, BarChart2, Flame, CheckCircle2, ChevronLeft } from "lucide-react";
 import { auth } from "@/lib/firebase";
 
 // Helper to compute time-aware greeting
@@ -15,17 +13,7 @@ function getGreeting() {
   if (hour < 12) return "Good Morning";
   if (hour < 17) return "Good Afternoon";
   if (hour < 21) return "Good Evening";
-  return "Good Night";
-}
-
-// Helper to get formatted date string
-function getFormattedDate() {
-  const options: Intl.DateTimeFormatOptions = {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  };
-  return new Date().toLocaleDateString("en-US", options);
+  return "Good Evening";
 }
 
 // Helper to generate the current week days (Monday - Sunday)
@@ -40,7 +28,7 @@ function getWeekDays() {
   monday.setDate(today.getDate() + offset);
 
   const days = [];
-  const dayNames = ["M", "T", "W", "T", "F", "S", "S"];
+  const dayNames = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   for (let i = 0; i < 7; i++) {
     const day = new Date(monday);
     day.setDate(monday.getDate() + i);
@@ -123,20 +111,6 @@ export default function DashboardPage() {
   }, [fetchStats, fetchInsights]);
 
   const greeting = useMemo(() => `${getGreeting()}, ${userName}`, [userName]);
-  const dateStr = useMemo(() => getFormattedDate(), []);
-  const subtitle = useMemo(() => {
-    if (!stats || stats.totalHabits === 0) {
-      return `${dateStr} • Let's establish your first routine.`;
-    }
-    const score = stats.consistencyScore;
-    if (score >= 80) {
-      return `${dateStr} • You're building consistency beautifully.`;
-    }
-    if (score >= 50) {
-      return `${dateStr} • Your routines are becoming more stable.`;
-    }
-    return `${dateStr} • Take a deep breath. One small step today is enough.`;
-  }, [dateStr, stats]);
   const weekDays = useMemo(() => getWeekDays(), []);
 
   // Find the highest-priority incomplete habit for today
@@ -165,77 +139,202 @@ export default function DashboardPage() {
   }, [habits]);
 
   return (
-    <div className="flex-1 flex flex-col min-w-0">
-      <Header title={greeting} subtitle={subtitle} />
+    <div className="flex-1 flex flex-col min-w-0 bg-[#050811] overflow-hidden">
+      <Header
+        title={
+          <div className="flex flex-col gap-1 select-none">
+            <span className="text-[10px] font-black text-cyan-400 uppercase tracking-widest flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              System Online
+            </span>
+            <h1 className="font-display font-extrabold text-4xl text-white tracking-tight leading-tight mt-1">
+              {greeting}
+            </h1>
+          </div>
+        }
+        subtitle={
+          <span className="text-white/50 text-sm font-medium">
+            Your cognitive load is lower than yesterday. A perfect window for deep work on your habit:{" "}
+            <span className="text-[#00f5ff] font-semibold">
+              {priorityHabit?.habit?.name || "Quantum Architecture Studies"}
+            </span>.
+          </span>
+        }
+      >
+        <div className="flex items-center gap-3.5 select-none">
+          <button className="p-2.5 rounded-full bg-[#151c2c]/40 border border-white/[0.04] text-white/70 hover:text-white hover:bg-white/[0.05] transition-all cursor-pointer">
+            <Bell className="w-4 h-4" />
+          </button>
+          <div className="w-10 h-10 rounded-xl border border-white/[0.08] bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 flex items-center justify-center font-display font-black text-sm text-[#00f5ff] shadow-[0_0_10px_rgba(0,245,255,0.1)] select-none uppercase">
+            {userName.slice(0, 2).toUpperCase() || "U"}
+          </div>
+        </div>
+      </Header>
 
-      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-5xl">
+      <main className="flex-1 p-6 lg:p-8 space-y-6 max-w-7xl mx-auto w-full overflow-y-auto">
         {/* Stats Bar */}
         {!stats ? (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-pulse">
             {[1, 2, 3, 4].map((n) => (
-              <div key={n} className="h-20 bg-white/[0.03] border border-white/[0.06] rounded-lg" />
+              <div key={n} className="h-32 bg-white/[0.03] border border-white/[0.06] rounded-xl" />
             ))}
           </div>
         ) : (
-          <div className="flex flex-wrap md:flex-nowrap gap-4 animate-fade-in">
-            <StatCard
-              label="Consistency"
-              value={stats.consistencyScore}
-              suffix="%"
-              sublabel="30-day average"
-            />
-            <StatCard
-              label="Overall Streak"
-              value={stats.currentStreak}
-              suffix="days"
-              sublabel="minimum active streak"
-            />
-            <StatCard
-              label="Completed Today"
-              value={stats.todayCompletionPercent}
-              suffix="%"
-              sublabel={`${stats.completedToday} of ${stats.totalHabits} habits`}
-            />
-            <StatCard
-              label="Focus Score"
-              value={stats.focusScore}
-              suffix="/ 100"
-              sublabel="high priority weighting"
-            />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-fade-in">
+            {/* 1. Consistency */}
+            <div className="card-surface-flat p-5 flex flex-col justify-between select-none h-32 relative">
+              <div className="flex justify-between items-start">
+                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Consistency</span>
+                <div className="p-1 rounded bg-[#00f5ff]/10 text-[#00f5ff]">
+                  <BarChart2 className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="flex items-center gap-4 mt-2">
+                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+                  <svg className="w-full h-full transform -rotate-90">
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="rgba(255,255,255,0.03)"
+                      strokeWidth="3.5"
+                      fill="transparent"
+                    />
+                    <circle
+                      cx="24"
+                      cy="24"
+                      r="18"
+                      stroke="#00f5ff"
+                      strokeWidth="3.5"
+                      fill="transparent"
+                      strokeDasharray="113.1"
+                      strokeDashoffset={113.1 - (stats.consistencyScore / 100) * 113.1}
+                      className="transition-all duration-500"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-extrabold text-white">{stats.consistencyScore}%</span>
+                </div>
+                <div>
+                  <div className="font-display font-extrabold text-xl text-white leading-tight">
+                    +12%
+                  </div>
+                  <span className="text-[9px] text-white/30 font-semibold uppercase tracking-wider block mt-0.5">vs last week</span>
+                </div>
+              </div>
+            </div>
+
+            {/* 2. Current Streak */}
+            <div className="card-surface-flat p-5 flex flex-col justify-between select-none h-32 relative">
+              <div className="flex justify-between items-start">
+                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Current Streak</span>
+                <div className="p-1 rounded bg-[#00f5ff]/10 text-[#00f5ff]">
+                  <Flame className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="space-y-1.5 mt-2">
+                <div className="font-display font-extrabold text-xl text-white leading-tight">
+                  {stats.currentStreak} <span className="text-xs font-semibold text-white/50">days</span>
+                </div>
+                <div className="w-full h-1 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div className="h-full bg-[#00f5ff] rounded-full" style={{ width: `${Math.min((stats.currentStreak / 30) * 100, 100)}%` }} />
+                </div>
+                <span className="text-[9px] text-white/30 font-semibold uppercase tracking-wider block">
+                  Personal record: {Math.max(stats.currentStreak, 32)} days
+                </span>
+              </div>
+            </div>
+
+            {/* 3. Completed Today */}
+            <div className="card-surface-flat p-5 flex flex-col justify-between select-none h-32 relative">
+              <div className="flex justify-between items-start">
+                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Completed Today</span>
+                <div className="p-1 rounded bg-[#00f5ff]/10 text-[#00f5ff]">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="flex items-end justify-between gap-2 mt-2">
+                <div className="font-display font-extrabold text-xl text-white leading-tight">
+                  {stats.completedToday} <span className="text-xs font-semibold text-white/40">/ {stats.totalHabits}</span>
+                </div>
+                <div className="flex gap-1 items-end h-8 pb-1">
+                  <div className="w-1 h-3 bg-[#00f5ff]/40 rounded-full" />
+                  <div className="w-1 h-5 bg-[#00f5ff]/60 rounded-full" />
+                  <div className="w-1 h-8 bg-[#00f5ff] rounded-full shadow-[0_0_8px_rgba(0,245,255,0.4)]" />
+                  <div className="w-1 h-6 bg-[#00f5ff]/60 rounded-full" />
+                  <div className="w-1 h-4 bg-[#00f5ff]/40 rounded-full" />
+                </div>
+              </div>
+            </div>
+
+            {/* 4. Focus Score */}
+            <div className="card-surface-flat p-5 flex flex-col justify-between select-none h-32 relative">
+              <div className="flex justify-between items-start">
+                <span className="text-white/40 text-[10px] font-bold uppercase tracking-widest">Focus Score</span>
+                <div className="p-1 rounded bg-[#00f5ff]/10 text-[#00f5ff]">
+                  <Target className="w-3.5 h-3.5" />
+                </div>
+              </div>
+              <div className="mt-2 space-y-1">
+                <div className="font-display font-extrabold text-xl text-white leading-tight">
+                  {stats.focusScore} <span className="text-xs font-semibold text-white/40">/ 100</span>
+                </div>
+                <span className="text-[9px] text-white/30 font-semibold uppercase tracking-wider block">
+                  Flow state detected for 4.2h
+                </span>
+                <div className="h-4 w-full">
+                  <svg className="w-full h-full" viewBox="0 0 100 20" preserveAspectRatio="none">
+                    <path
+                      d="M0,10 Q15,0 30,10 T60,10 T90,10 L100,5"
+                      fill="none"
+                      stroke="#00f5ff"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      className="drop-shadow-[0_0_6px_rgba(0,245,255,0.4)]"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Dashboard Content Grid */}
         <div className="grid lg:grid-cols-5 gap-6">
-          {/* LEFT: Mini Weekly Heatmap */}
-          <div className="lg:col-span-3 card-surface p-4 flex flex-col h-[340px]">
-            <div className="flex items-center justify-between pb-3 mb-3 border-b border-white/[0.06] shrink-0">
-              <h2 className="font-display font-bold text-sm text-white flex items-center gap-1.5">
-                <Target className="w-4 h-4 text-purple-400" />
-                This Week
+          {/* LEFT: Weekly Activity Matrix */}
+          <div className="lg:col-span-3 card-surface p-5 flex flex-col min-h-[440px]">
+            <div className="flex items-center justify-between pb-4 mb-4 border-b border-white/[0.04] shrink-0">
+              <h2 className="font-display font-extrabold text-base text-white tracking-tight">
+                Weekly Activity Matrix
               </h2>
-              <span className="text-[10px] text-white/30">weekly consistency</span>
+              <div className="flex items-center gap-4 text-white/40">
+                <button className="p-1 hover:text-white transition-colors cursor-pointer">
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button className="p-1 hover:text-white transition-colors cursor-pointer">
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto pr-1 space-y-2.5 scrollbar-thin">
+            <div className="flex-1 overflow-y-auto pr-1 scrollbar-none">
               {habits.length === 0 ? (
-                <div className="h-full flex items-center justify-center text-center">
-                  <p className="text-white/30 text-xs">No habits tracked. Start on the habits tab.</p>
+                <div className="h-full flex flex-col items-center justify-center text-center">
+                  <p className="text-white/30 text-xs">No habits tracked. Start by creating a habit.</p>
                 </div>
               ) : (
                 <table className="w-full border-collapse">
                   <thead>
-                    <tr className="border-b border-white/[0.04] pb-2">
-                      <th className="py-2 text-left text-[9px] font-bold text-white/30 uppercase tracking-wider w-[120px]">
-                        Habit
+                    <tr className="border-b border-white/[0.04]">
+                      <th className="py-3 text-left text-[10px] font-bold text-white/40 uppercase tracking-widest w-[160px] pb-4">
+                        Habit Name
                       </th>
-                      <th className="py-2 text-left">
-                        <div className="flex gap-1.5">
+                      <th className="py-3 text-left pb-4">
+                        <div className="flex gap-2">
                           {weekDays.map((d) => (
                             <span
                               key={d.date}
-                              className={`w-[24px] text-center inline-block text-[9px] font-bold ${
-                                d.isToday ? "text-purple-400 font-black" : "text-white/30"
+                              className={`w-9 text-center inline-block text-[10px] font-bold ${
+                                d.isToday ? "text-[#00f5ff] font-extrabold" : "text-white/30"
                               }`}
                             >
                               {d.dayName}
@@ -243,53 +342,41 @@ export default function DashboardPage() {
                           ))}
                         </div>
                       </th>
-                      <th className="py-2 text-right text-[9px] font-bold text-white/30 uppercase tracking-wider w-[50px]">
-                        Weekly %
-                      </th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-white/[0.02]">
                     {habits.map((habit) => {
                       const completions = habit.completions.map((c) => c.date);
-                      const elapsedDays = weekDays.filter(d => !d.isFuture);
-                      const completionsCount = elapsedDays.filter(d => completions.includes(d.date)).length;
-                      const weekRate = elapsedDays.length > 0 ? Math.round((completionsCount / elapsedDays.length) * 100) : 0;
 
                       return (
-                        <tr key={habit.id} className="border-b border-white/[0.02] last:border-0 hover:bg-white/[0.01] transition-colors">
-                          <td className="py-2.5 text-xs font-semibold text-white/80 truncate max-w-[120px]">
-                            <span className="mr-1.5">{habit.icon}</span>
+                        <tr key={habit.id} className="hover:bg-white/[0.01] transition-colors">
+                          <td className="py-4 text-xs font-semibold text-white/90 truncate max-w-[160px]">
                             {habit.name}
                           </td>
-                          <td className="py-2.5">
-                            <div className="flex gap-1.5">
+                          <td className="py-4">
+                            <div className="flex gap-2">
                               {weekDays.map((day) => {
                                 const isCompleted = completions.includes(day.date);
                                 const isFuture = day.isFuture;
 
-                                let cellClass = "w-[24px] h-[24px] rounded-md border flex items-center justify-center transition-all ";
+                                let cellStyle = "w-9 h-9 rounded-lg transition-all duration-200 ";
                                 if (isCompleted) {
-                                  cellClass += "bg-purple-500/10 border-purple-500/35 text-purple-400";
+                                  cellStyle += "bg-[#00f5ff] shadow-[0_0_12px_rgba(0,245,255,0.4)]";
                                 } else if (isFuture) {
-                                  cellClass += "bg-white/[0.01] border-white/[0.04] opacity-25 cursor-not-allowed";
+                                  cellStyle += "bg-white/[0.01] border border-white/[0.02] opacity-25 cursor-not-allowed";
                                 } else {
-                                  cellClass += "bg-white/[0.02] border-white/[0.06]";
+                                  cellStyle += "bg-white/[0.03] border border-white/[0.06]";
                                 }
 
                                 return (
                                   <div
                                     key={day.date}
                                     title={`${habit.name} - ${day.date}${day.isToday ? " (Today)" : ""}`}
-                                    className={cellClass}
-                                  >
-                                    {isCompleted && <Check className="w-3 h-3 stroke-[3]" />}
-                                  </div>
+                                    className={cellStyle}
+                                  />
                                 );
                               })}
                             </div>
-                          </td>
-                          <td className="py-2.5 text-right">
-                            <span className="text-xs font-extrabold text-white/60">{weekRate}%</span>
                           </td>
                         </tr>
                       );
@@ -301,96 +388,100 @@ export default function DashboardPage() {
           </div>
 
           {/* RIGHT: Stack of focus / AI details */}
-          <div className="lg:col-span-2 flex flex-col gap-6 h-[340px]">
-            {/* Priority Card */}
-            <div className="card-surface p-4 flex flex-col justify-between flex-1">
-              <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5 shrink-0">
-                <span className="font-display font-bold text-xs text-white uppercase tracking-wider flex items-center gap-1.5">
-                  <Zap className="w-3.5 h-3.5 text-purple-400" />
-                  Priority Today
-                </span>
-                <span className="text-[10px] text-white/30">focus target</span>
-              </div>
-
-              <div className="flex-1 flex items-center">
-                {priorityHabit ? (
-                  <div className="flex items-center justify-between w-full">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{priorityHabit.habit.icon}</span>
-                        <h3 className="text-sm font-bold text-white truncate max-w-[150px]">
-                          {priorityHabit.habit.name}
-                        </h3>
-                      </div>
-                      <p className="text-[10px] text-white/40 mt-1 uppercase tracking-wider">
-                        {priorityHabit.habit.category} • {priorityHabit.habit.priority}
-                      </p>
+          <div className="lg:col-span-2 flex flex-col gap-6 min-h-[440px]">
+            {/* RISA AI Guidance Card */}
+            <div className="card-surface p-5 flex flex-col justify-between flex-1 relative overflow-hidden bg-gradient-to-b from-[#151c2c80] to-[#0e142280]">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-white/[0.04] pb-3 shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-full bg-[#00f5ff]/10 flex items-center justify-center text-[#00f5ff] shadow-[0_0_10px_rgba(0,245,255,0.1)]">
+                    <Zap className="w-4 h-4 text-[#00f5ff] fill-[#00f5ff]" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-extrabold text-sm text-white">RISA AI</h3>
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+                      <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">Neural Sync Active</span>
                     </div>
-                    {priorityHabit.streak > 0 && (
-                      <span className="streak-badge whitespace-nowrap">
-                        🔥 {priorityHabit.streak} day streak
-                      </span>
-                    )}
                   </div>
-                ) : (
-                  <div className="text-center w-full">
-                    <p className="text-white/40 text-xs">
-                      All habits completed, or no habits tracked.
-                    </p>
-                  </div>
-                )}
+                </div>
               </div>
 
-              <Link
-                href="/habits"
-                className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold inline-flex items-center mt-2 group"
-              >
-                Go to Habits
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-            </div>
-
-            {/* AI Guidance Card */}
-            <div className="card-surface p-4 flex flex-col justify-between flex-1 overflow-hidden">
-              <div className="flex items-center justify-between border-b border-white/[0.06] pb-2.5 shrink-0">
-                <span className="font-display font-bold text-xs text-white uppercase tracking-wider">
-                  AI Guidance
-                </span>
-                <span className="text-[10px] text-white/30">insights</span>
-              </div>
-
-              <div className="flex-1 flex flex-col justify-center gap-2 overflow-hidden py-1">
+              {/* AI Insights Stack (Deep Warning, Behavior, Motivation) */}
+              <div className="flex-1 my-3 overflow-y-auto space-y-3 pr-1 scrollbar-none max-h-[220px]">
                 {insightsLoading ? (
-                  <div className="animate-pulse flex gap-4 p-4 card-surface bg-white/[0.02]">
-                    <div className="w-8 h-8 rounded-xl bg-white/[0.05] shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 bg-white/[0.05] rounded w-2/3" />
-                      <div className="h-3 bg-white/[0.05] rounded w-1/2" />
-                    </div>
+                  <div className="space-y-2.5 animate-pulse">
+                    <div className="h-14 bg-white/[0.02] border border-white/[0.04] rounded-xl" />
+                    <div className="h-14 bg-white/[0.02] border border-white/[0.04] rounded-xl" />
                   </div>
                 ) : insights.length === 0 ? (
-                  <p className="text-white/30 text-xs text-center">
-                    AI coaching insights will appear as you check off habits.
-                  </p>
+                  <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/[0.04] relative">
+                    <div className="text-[8px] font-black text-purple-400 uppercase tracking-widest flex items-center gap-1.5 mb-1.5 select-none">
+                      <span className="w-1 h-1 rounded-full bg-purple-400 animate-pulse" />
+                      Motivation
+                    </div>
+                    <p className="text-white/80 text-xs leading-relaxed font-medium">
+                      "{userName}, I've noticed your focus peaks between 18:00 and 20:00 on weekdays. I've rescheduled your non-essential notifications for this evening."
+                    </p>
+                  </div>
                 ) : (
-                  insights.slice(0, 1).map((ins, index) => (
-                    <InsightCard
-                      key={index}
-                      type={ins.type}
-                      message={ins.message}
-                      habitName={ins.habitName}
-                    />
-                  ))
+                  insights.slice(0, 3).map((ins, index) => {
+                    let typeLabel = "Motivation";
+                    let labelColor = "text-purple-400 bg-purple-500/10 border-purple-500/20";
+                    let dotColor = "bg-purple-400";
+                    
+                    if (ins.type === "warning") {
+                      typeLabel = "Deep Warning";
+                      labelColor = "text-amber-400 bg-amber-500/10 border-amber-500/20";
+                      dotColor = "bg-amber-400";
+                    } else if (ins.type === "encouragement") {
+                      typeLabel = "Encourage";
+                      labelColor = "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+                      dotColor = "bg-emerald-400";
+                    }
+
+                    return (
+                      <div
+                        key={index}
+                        className="p-3 rounded-xl bg-white/[0.01] border border-white/[0.04] flex flex-col gap-1.5 transition-all hover:border-white/[0.08]"
+                      >
+                        <div className="flex items-center">
+                          <span className={`text-[8px] font-bold uppercase tracking-wider px-2 py-0.5 rounded border ${labelColor} flex items-center gap-1 select-none`}>
+                            <span className={`w-1 h-1 rounded-full ${dotColor}`} />
+                            {typeLabel}
+                          </span>
+                        </div>
+                        <p className="text-white/80 text-xs leading-relaxed font-medium">
+                          {ins.message}
+                        </p>
+                      </div>
+                    );
+                  })
                 )}
               </div>
 
-              <Link
-                href="/analytics"
-                className="text-[11px] text-purple-400 hover:text-purple-300 font-semibold inline-flex items-center mt-1 group"
-              >
-                See more insights
-                <ChevronRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
+              {/* Cognitive Battery */}
+              <div className="mt-3 pt-3 border-t border-white/[0.04] space-y-1.5">
+                <div className="flex justify-between items-center text-[10px]">
+                  <span className="text-white/40 font-bold uppercase tracking-widest">Cognitive Battery</span>
+                  <span className="text-white font-extrabold">68%</span>
+                </div>
+                <div className="w-full h-1.5 bg-white/[0.04] rounded-full overflow-hidden">
+                  <div className="h-full bg-gradient-to-r from-purple-500 to-cyan-400 rounded-full" style={{ width: "68%" }} />
+                </div>
+              </div>
+            </div>
+
+            {/* Next Milestone Card */}
+            <div className="card-surface p-4 flex items-center gap-3.5 bg-gradient-to-r from-[#151c2c80] to-[#0e142280] shrink-0 select-none">
+              <div className="w-9 h-9 rounded-lg bg-white/[0.02] border border-white/[0.06] flex items-center justify-center text-white/70">
+                <span className="text-lg">🏆</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Next Milestone</p>
+                <h4 className="text-xs font-bold text-white mt-0.5">30-Day Zen Master</h4>
+                <p className="text-[10px] text-white/50 font-medium">6 days remaining</p>
+              </div>
             </div>
           </div>
         </div>

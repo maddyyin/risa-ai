@@ -28,7 +28,7 @@ export function CategoryManagerDialog({ open, onOpenChange }: CategoryManagerDia
 
   const [newName, setNewName] = useState("");
   const [newIcon, setNewIcon] = useState("📋");
-  const [newColor, setNewColor] = useState("#8b5cf6");
+  const [newColor, setNewColor] = useState("#3b82f6");
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -42,7 +42,7 @@ export function CategoryManagerDialog({ open, onOpenChange }: CategoryManagerDia
     addCategory({ name: newName.trim(), icon: newIcon || "📋", color: newColor });
     setNewName("");
     setNewIcon("📋");
-    setNewColor("#8b5cf6");
+    setNewColor("#3b82f6");
   };
 
   const startEdit = (cat: { id: string; name: string; icon: string; color: string }) => {
@@ -66,7 +66,7 @@ export function CategoryManagerDialog({ open, onOpenChange }: CategoryManagerDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[440px] bg-[#111118] border-white/[0.06] text-white">
+      <DialogContent className="sm:max-w-[440px] bg-[#151c2c]/95 backdrop-blur-md border-white/[0.06] text-white">
         <DialogHeader className="pb-3 border-b border-white/[0.06]">
           <DialogTitle className="font-display font-bold text-lg text-white">
             Manage Categories
@@ -122,7 +122,7 @@ export function CategoryManagerDialog({ open, onOpenChange }: CategoryManagerDia
 
               if (isEditing) {
                 return (
-                  <div key={cat.id} className="flex items-center gap-2 p-2 rounded-lg bg-purple-500/5 border border-purple-500/20">
+                  <div key={cat.id} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/5 border border-blue-500/20">
                     <Input
                       value={editIcon}
                       onChange={(e) => setEditIcon(e.target.value)}
@@ -199,7 +199,7 @@ export function CategoryManagerDialog({ open, onOpenChange }: CategoryManagerDia
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => startEdit(cat)}
-                        className="p-1 text-white/40 hover:text-purple-400 transition-colors"
+                        className="p-1 text-white/40 hover:text-blue-400 transition-colors"
                       >
                         <Pencil className="w-3.5 h-3.5" />
                       </button>

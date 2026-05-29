@@ -25,7 +25,7 @@ const weekDays = [
   { label: "S", value: 6 },
 ];
 
-export function CreateHabitDialog() {
+export function CreateHabitDialog({ trigger }: { trigger?: React.ReactElement }) {
   const createHabit = useHabitStore((s) => s.createHabit);
   const categories = useHabitStore((s) => s.categories);
   const [open, setOpen] = useState(false);
@@ -52,7 +52,7 @@ export function CreateHabitDialog() {
     await createHabit({
       name,
       icon: icon || "📌",
-      color: "#8b5cf6",
+      color: "#3b82f6",
       frequency,
       targetDays: frequency === "custom" ? targetDays : undefined,
       category: category || "General",
@@ -75,13 +75,15 @@ export function CreateHabitDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <button className="btn-primary flex items-center gap-1.5 px-4 py-2 text-xs font-semibold select-none cursor-pointer">
-            <Plus className="w-3.5 h-3.5" />
-            Create Habit
-          </button>
+          trigger || (
+            <button className="btn-primary flex items-center gap-1.5 px-4 py-2 text-xs font-semibold select-none cursor-pointer">
+              <Plus className="w-3.5 h-3.5" />
+              Create Habit
+            </button>
+          )
         }
       />
-      <DialogContent className="sm:max-w-[420px] bg-[#111118] border-white/[0.06] text-white">
+      <DialogContent className="sm:max-w-[420px] bg-[#151c2c]/95 backdrop-blur-md border-white/[0.06] text-white">
         <DialogHeader className="pb-3 border-b border-white/[0.06]">
           <DialogTitle className="font-display font-bold text-lg text-white">
             Create Habit
@@ -188,7 +190,7 @@ export function CreateHabitDialog() {
                         onClick={() => handleToggleDay(day.value)}
                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-all border ${
                           isSelected
-                            ? "bg-purple-500/20 border-purple-500/40 text-purple-300"
+                            ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
                             : "bg-white/[0.02] border-white/[0.06] text-white/50 hover:bg-white/[0.05]"
                         }`}
                       >

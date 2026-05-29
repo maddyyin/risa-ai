@@ -80,7 +80,7 @@ export function EditHabitDialog({ habit, open, onOpenChange }: EditHabitDialogPr
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[420px] bg-[#111118] border-white/[0.06] text-white">
+      <DialogContent className="sm:max-w-[420px] bg-[#151c2c]/95 backdrop-blur-md border-white/[0.06] text-white">
         <DialogHeader className="pb-3 border-b border-white/[0.06]">
           <DialogTitle className="font-display font-bold text-lg text-white">
             Edit Habit
@@ -187,7 +187,7 @@ export function EditHabitDialog({ habit, open, onOpenChange }: EditHabitDialogPr
                         onClick={() => handleToggleDay(day.value)}
                         className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-semibold transition-all border ${
                           isSelected
-                            ? "bg-purple-500/20 border-purple-500/40 text-purple-300"
+                            ? "bg-blue-500/20 border-blue-500/40 text-blue-300"
                             : "bg-white/[0.02] border-white/[0.06] text-white/50 hover:bg-white/[0.05]"
                         }`}
                       >
